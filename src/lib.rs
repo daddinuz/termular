@@ -1,8 +1,10 @@
-mod cursor;
-mod vector;
+pub mod cursor;
+pub mod screen;
+pub mod vector;
 
 use crate::cursor::Cursor;
-use std::io::{self, Write};
+use crate::screen::Screen;
+use std::io::Write;
 
 pub struct Term<W: Write>(W);
 
@@ -12,11 +14,9 @@ impl<W: Write> Term<W> {
         Self(w)
     }
 
-    pub fn alternative_screen(&mut self, enable: bool) -> io::Result<()> {
-        match enable {
-            true => write!(&mut self.0, "\x1B[?1049h"),
-            false => write!(&mut self.0, "\x1B[?1049l"),
-        }
+    #[must_use]
+    pub fn screen(&mut self) -> Screen<'_, W> {
+        Screen(Ok(&mut self.0))
     }
 
     #[must_use]

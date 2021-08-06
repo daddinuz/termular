@@ -1,21 +1,25 @@
 use std::time::Duration;
 use std::{io, thread};
+use term::screen::Buffer;
 use term::Term;
 
 fn main() {
     let stdout = io::stdout();
     let mut term = Term::new(stdout.lock());
 
-    term.alternative_screen(true).unwrap();
-    term.cursor()
-        .to((0, 0).into())
-        .right(8)
-        .down(8)
+    term.screen()
+        .set_buffer(Buffer::Alternative)
+        .clear()
         .flush()
         .unwrap();
+    term.cursor().to((8, 8).into()).flush().unwrap();
 
     println!("Hello world!");
 
-    thread::sleep(Duration::from_secs(5));
-    term.alternative_screen(false).unwrap();
+    thread::sleep(Duration::from_secs(2));
+    term.screen()
+        .clear()
+        .set_buffer(Buffer::Canonical)
+        .flush()
+        .unwrap();
 }
