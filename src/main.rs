@@ -10,13 +10,14 @@ fn main() {
     term.screen()
         .set_buffer(Buffer::Alternative)
         .clear()
+        .cursor()
+        .to((8, 8))
         .flush()
         .unwrap();
-    term.cursor().to((8, 8).into()).flush().unwrap();
 
     println!("Hello world!");
-
     thread::sleep(Duration::from_secs(2));
+
     term.screen()
         .clear()
         .set_buffer(Buffer::Canonical)

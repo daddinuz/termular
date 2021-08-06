@@ -1,3 +1,4 @@
+use crate::cursor::Cursor;
 use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -24,6 +25,11 @@ impl<'a, W: Write> Screen<'a, W> {
             }
             .map(|_| w)
         }))
+    }
+
+    #[must_use]
+    pub fn cursor(self) -> Cursor<'a, W> {
+        Cursor(self.0)
     }
 
     pub fn flush(self) -> io::Result<()> {
