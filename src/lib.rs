@@ -1,14 +1,16 @@
 #![feature(deadline_api)]
 
 pub mod cursor;
+mod mode;
 pub mod nio;
 pub mod screen;
 pub mod vector;
 
 use crate::cursor::Cursor;
+pub use crate::mode::Mode;
 use crate::nio::NonblockingStdin;
 use crate::screen::Screen;
-use std::io::{StderrLock, StdoutLock, Write};
+use std::io::{self, StderrLock, StdoutLock, Write};
 
 pub struct Term<'a> {
     stdin: NonblockingStdin,
@@ -19,8 +21,8 @@ pub struct Term<'a> {
 impl<'a> Term<'a> {
     #[must_use]
     pub fn with(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> Self {
+        best_effort(stdout.flush());
         let stdin = nio::stdin();
-        flush(&mut stdout);
         Self {
             stdin,
             stdout,
@@ -67,15 +69,17 @@ impl<'a> Term<'a> {
     pub fn stderr_mut(&mut self) -> &mut StderrLock<'a> {
         &mut self.stderr
     }
+
+    pub fn set_mode(&mut self, mode: Mode) -> io::Result<()> {
+        mode::set(mode)
+    }
 }
 
 impl<'a> Drop for Term<'a> {
     fn drop(&mut self) {
-        flush(&mut self.stdout);
+        best_effort(self.stdout.flush());
+        best_effort(self.set_mode(Mode::Native));
     }
 }
 
-fn flush(stream: &mut dyn Write) {
-    // best-effort
-    let _ = stream.flush();
-}
+fn best_effort<T, E>(_: Result<T, E>) {}

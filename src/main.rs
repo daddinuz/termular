@@ -1,11 +1,12 @@
 use std::{io, time::Duration};
-use term::{screen::Buffer, Term};
+use term::{screen::Buffer, Mode, Term};
 
 fn main() {
     let (stdout, stderr) = (io::stdout(), io::stderr());
     let mut term = Term::with(stdout.lock(), stderr.lock());
     let mut buf = [0u8; 11];
 
+    term.set_mode(Mode::Raw).unwrap();
     term.cursor()
         .save()
         .screen()
