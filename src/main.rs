@@ -1,13 +1,14 @@
-use std::time::Duration;
-use std::{io, thread};
-use term::screen::Buffer;
-use term::Term;
+use std::{io, time::Duration};
+use term::{screen::Buffer, Term};
 
 fn main() {
-    let stdout = io::stdout();
-    let mut term = Term::new(stdout.lock());
+    let (stdout, stderr) = (io::stdout(), io::stderr());
+    let mut term = Term::with(stdout.lock(), stderr.lock());
+    let mut buf = [0u8; 11];
 
-    term.screen()
+    term.cursor()
+        .save()
+        .screen()
         .set_buffer(Buffer::Alternative)
         .clear()
         .cursor()
@@ -15,12 +16,17 @@ fn main() {
         .flush()
         .unwrap();
 
-    println!("Hello world!");
-    thread::sleep(Duration::from_secs(2));
+    let result = term
+        .stdin_mut()
+        .read_timeout(&mut buf, Duration::from_secs(5));
 
     term.screen()
         .clear()
         .set_buffer(Buffer::Canonical)
+        .cursor()
+        .restore()
         .flush()
         .unwrap();
+
+    println!("{:?}", &buf[..result.unwrap_or(0)]);
 }

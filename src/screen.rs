@@ -20,8 +20,8 @@ impl<'a, W: Write> Screen<'a, W> {
     pub fn set_buffer(self, buffer: Buffer) -> Self {
         Self(self.0.and_then(|w| {
             match buffer {
-                Buffer::Canonical => write!(w, "\x1B[?1049h"),
-                Buffer::Alternative => write!(w, "\x1B[?1049l"),
+                Buffer::Canonical => write!(w, "\x1B[?1049l"),
+                Buffer::Alternative => write!(w, "\x1B[?1049h"),
             }
             .map(|_| w)
         }))
