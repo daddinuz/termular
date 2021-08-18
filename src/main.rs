@@ -4,7 +4,7 @@ use term::{screen::Buffer, Mode, Term};
 fn main() {
     let (stdout, stderr) = (io::stdout(), io::stderr());
     let mut term = Term::with(stdout.lock(), stderr.lock());
-    let mut buf = [0u8; 11];
+    let mut buf = Vec::new();
 
     term.set_mode(Mode::Raw).unwrap();
     term.cursor()
@@ -19,7 +19,7 @@ fn main() {
 
     let result = term
         .stdin_mut()
-        .read_timeout(&mut buf, Duration::from_secs(5));
+        .read_timeout_until(b' ', &mut buf, Duration::from_secs(5));
 
     term.screen()
         .clear()

@@ -63,6 +63,36 @@ impl NonblockingStdin {
 
         Ok(counter)
     }
+
+    pub fn read_timeout_until(
+        &mut self,
+        delimiter: u8,
+        buf: &mut Vec<u8>,
+        timeout: Duration,
+    ) -> io::Result<usize> {
+        let start_len = buf.len();
+        let deadline = Instant::now() + timeout;
+        loop {
+            match self.receiver.recv_deadline(deadline) {
+                Ok(io) => {
+                    let byte = io?;
+                    buf.push(byte);
+                    if byte == delimiter {
+                        break;
+                    }
+                }
+                Err(err) => {
+                    if buf.len() > start_len {
+                        break;
+                    }
+
+                    return Err(io::Error::new(io::ErrorKind::TimedOut, err));
+                }
+            }
+        }
+
+        Ok(buf.len() - start_len)
+    }
 }
 
 pub fn stdin() -> NonblockingStdin {
