@@ -17,6 +17,7 @@ fn main() {
         .flush()
         .unwrap();
 
+    let position = term.position().unwrap();
     let result = term
         .stdin_mut()
         .read_timeout_until(b' ', &mut buf, Duration::from_secs(5));
@@ -29,5 +30,6 @@ fn main() {
         .flush()
         .unwrap();
 
+    println!("{:?}", position);
     println!("{:?}", &buf[..result.unwrap_or(0)]);
 }
