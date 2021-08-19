@@ -1,4 +1,4 @@
-use std::{io, time::Duration};
+use std::{io, str, time::Duration};
 use term::{screen::Buffer, Mode, Term};
 
 fn main() {
@@ -31,5 +31,5 @@ fn main() {
         .unwrap();
 
     println!("{:?}", position);
-    println!("{:?}", &buf[..result.unwrap_or(0)]);
+    println!("{:?}", str::from_utf8(&buf[..result.unwrap_or(0)]));
 }

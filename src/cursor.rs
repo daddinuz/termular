@@ -7,22 +7,22 @@ pub struct Cursor<'a, W: Write>(pub(crate) io::Result<&'a mut W>);
 impl<'a, W: Write> Cursor<'a, W> {
     #[must_use]
     pub fn hide(self) -> Self {
-        Self(self.0.and_then(|w| write!(w, "\x1B[?25l").map(|_| w)))
+        Self(self.0.and_then(|w| w.write_all(b"\x1B[?25l").map(|_| w)))
     }
 
     #[must_use]
     pub fn show(self) -> Self {
-        Self(self.0.and_then(|w| write!(w, "\x1B[?25h").map(|_| w)))
+        Self(self.0.and_then(|w| w.write_all(b"\x1B[?25h").map(|_| w)))
     }
 
     #[must_use]
     pub fn save(self) -> Self {
-        Self(self.0.and_then(|w| write!(w, "\x1B[s").map(|_| w)))
+        Self(self.0.and_then(|w| w.write_all(b"\x1B[s").map(|_| w)))
     }
 
     #[must_use]
     pub fn restore(self) -> Self {
-        Self(self.0.and_then(|w| write!(w, "\x1B[u").map(|_| w)))
+        Self(self.0.and_then(|w| w.write_all(b"\x1B[u").map(|_| w)))
     }
 
     #[must_use]

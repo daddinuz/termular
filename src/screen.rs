@@ -13,15 +13,15 @@ pub struct Screen<'a, W: Write>(pub(crate) io::Result<&'a mut W>);
 impl<'a, W: Write> Screen<'a, W> {
     #[must_use]
     pub fn clear(self) -> Self {
-        Self(self.0.and_then(|w| write!(w, "\x1B[2J").map(|_| w)))
+        Self(self.0.and_then(|w| w.write_all(b"\x1B[2J").map(|_| w)))
     }
 
     #[must_use]
     pub fn set_buffer(self, buffer: Buffer) -> Self {
         Self(self.0.and_then(|w| {
             match buffer {
-                Buffer::Canonical => write!(w, "\x1B[?1049l"),
-                Buffer::Alternative => write!(w, "\x1B[?1049h"),
+                Buffer::Canonical => w.write_all(b"\x1B[?1049l"),
+                Buffer::Alternative => w.write_all(b"\x1B[?1049h"),
             }
             .map(|_| w)
         }))
