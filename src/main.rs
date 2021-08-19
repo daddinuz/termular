@@ -30,6 +30,9 @@ fn main() {
         .flush()
         .unwrap();
 
+    // flush buffers, release streams locks and restore term::Mode::Native.
+    drop(term);
+
     println!("{:?}", position);
     println!("{:?}", str::from_utf8(&buf[..result.unwrap_or(0)]));
 }
