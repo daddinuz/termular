@@ -30,7 +30,7 @@ impl<'a, 'b> Screen<'a, 'b> {
     }
 
     pub fn flush(self) -> io::Result<()> {
-        self.0.and_then(|t| t.stdout_mut().flush())
+        self.0?.stdout_mut().flush()
     }
 
     #[inline]

@@ -4,8 +4,8 @@ use term::{screen::Buffer, Mode, Term};
 fn main() {
     let (stdout, stderr) = (io::stdout(), io::stderr());
     let mut term = Term::with(stdout.lock(), stderr.lock());
-    let mut buf = Vec::new();
 
+    let size = term.size().unwrap();
     term.set_mode(Mode::Raw).unwrap();
     term.cursor()
         .save()
@@ -13,12 +13,11 @@ fn main() {
         .set_buffer(Buffer::Alternative)
         .clear()
         .cursor()
-        .to((8, 8))
+        .set_position((8, 8))
         .flush()
         .unwrap();
 
-    let position = term.position().unwrap();
-    let size = term.size().unwrap();
+    let mut buf = Vec::new();
     let result = term
         .stdin_mut()
         .read_timeout_until(b' ', &mut buf, Duration::from_secs(5));
@@ -34,7 +33,6 @@ fn main() {
     // flush buffers, release streams locks and restore term::Mode::Native.
     drop(term);
 
-    println!("{:?}", position);
     println!("{:?}", size);
     println!("{:?}", str::from_utf8(&buf[..result.unwrap_or(0)]));
 }

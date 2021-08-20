@@ -15,7 +15,6 @@ use crate::vector::Vector2;
 use libc::{ioctl, winsize, TIOCGWINSZ};
 use std::io::{self, StderrLock, StdoutLock, Write};
 use std::os::unix::io::AsRawFd;
-use std::time::Duration;
 
 pub struct Term<'a> {
     stdin: NonblockingStdin,
@@ -77,28 +76,6 @@ impl<'a> Term<'a> {
 
     pub fn set_mode(&mut self, mode: Mode) -> io::Result<()> {
         mode::set(mode)
-    }
-
-    pub fn position(&mut self) -> io::Result<Vector2<u16>> {
-        let mut buf = Vec::new();
-
-        self.stderr.write_all(b"\x1B[6n")?;
-        self.stdin
-            .read_timeout_until(b'R', &mut buf, Duration::from_millis(512))?;
-
-        match &buf[..] {
-            [.., b'\x1B', b'[', row, b';', col, b'R'] => {
-                let row = u16::from(row - b'1');
-                let col = u16::from(col - b'1');
-                Ok((col, row).into())
-            }
-            [.., b'\x1B', b'[', row10, row, b';', col10, col, b'R'] => {
-                let row = (u16::from(row10 - b'0') * 10 + u16::from(row - b'0')) - 1;
-                let col = (u16::from(col10 - b'0') * 10 + u16::from(col - b'0')) - 1;
-                Ok((col, row).into())
-            }
-            _ => unreachable!("{:?}", buf),
-        }
     }
 
     pub fn size(&mut self) -> io::Result<Vector2<u16>> {
