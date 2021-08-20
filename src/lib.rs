@@ -11,7 +11,10 @@ pub use crate::mode::Mode;
 use crate::nio::NonblockingStdin;
 use crate::screen::Screen;
 use crate::vector::Vector2;
+
+use libc::{ioctl, winsize, TIOCGWINSZ};
 use std::io::{self, StderrLock, StdoutLock, Write};
+use std::os::unix::io::AsRawFd;
 use std::time::Duration;
 
 pub struct Term<'a> {
@@ -95,6 +98,22 @@ impl<'a> Term<'a> {
                 Ok((col, row).into())
             }
             _ => unreachable!("{:?}", buf),
+        }
+    }
+
+    pub fn size(&mut self) -> io::Result<Vector2<u16>> {
+        let fd = self.stdout.as_raw_fd();
+        let mut term = winsize {
+            ws_row: 0,
+            ws_col: 0,
+            ws_xpixel: 0,
+            ws_ypixel: 0,
+        };
+
+        if unsafe { ioctl(fd, TIOCGWINSZ, &mut term as *mut _) } == -1 {
+            Err(io::Error::last_os_error())
+        } else {
+            Ok((term.ws_col, term.ws_row).into())
         }
     }
 }
