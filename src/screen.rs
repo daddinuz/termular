@@ -1,4 +1,5 @@
 use crate::cursor::Cursor;
+use crate::Term;
 use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -7,32 +8,37 @@ pub enum Buffer {
     Alternative,
 }
 
-#[derive(Debug)]
-pub struct Screen<'a, W: Write>(pub(crate) io::Result<&'a mut W>);
+pub struct Screen<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
 
-impl<'a, W: Write> Screen<'a, W> {
+impl<'a, 'b> Screen<'a, 'b> {
+    #[must_use]
+    pub fn cursor(self) -> Cursor<'a, 'b> {
+        Cursor(self.0)
+    }
+
     #[must_use]
     pub fn clear(self) -> Self {
-        Self(self.0.and_then(|w| w.write_all(b"\x1B[2J").map(|_| w)))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[2J"))
     }
 
     #[must_use]
     pub fn set_buffer(self, buffer: Buffer) -> Self {
-        Self(self.0.and_then(|w| {
-            match buffer {
-                Buffer::Canonical => w.write_all(b"\x1B[?1049l"),
-                Buffer::Alternative => w.write_all(b"\x1B[?1049h"),
-            }
-            .map(|_| w)
-        }))
-    }
-
-    #[must_use]
-    pub fn cursor(self) -> Cursor<'a, W> {
-        Cursor(self.0)
+        self.chain(|t| match buffer {
+            Buffer::Canonical => write!(t.stdout_mut(), "\x1B[?1049l"),
+            Buffer::Alternative => write!(t.stdout_mut(), "\x1B[?1049h"),
+        })
     }
 
     pub fn flush(self) -> io::Result<()> {
-        self.0.and_then(|w| w.flush())
+        self.0.and_then(|t| t.stdout_mut().flush())
+    }
+
+    #[inline]
+    #[must_use]
+    fn chain<F>(self, f: F) -> Self
+    where
+        F: FnOnce(&mut Term) -> io::Result<()>,
+    {
+        Self(self.0.and_then(|t| f(t).map(|_| t)))
     }
 }

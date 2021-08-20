@@ -36,13 +36,13 @@ impl<'a> Term<'a> {
     }
 
     #[must_use]
-    pub fn screen(&mut self) -> Screen<'_, StdoutLock<'a>> {
-        Screen(Ok(&mut self.stdout))
+    pub fn screen(&mut self) -> Screen<'a, '_> {
+        Screen(Ok(self))
     }
 
     #[must_use]
-    pub fn cursor(&mut self) -> Cursor<'_, StdoutLock<'a>> {
-        Cursor(Ok(&mut self.stdout))
+    pub fn cursor(&mut self) -> Cursor<'a, '_> {
+        Cursor(Ok(self))
     }
 
     #[must_use]
