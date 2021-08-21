@@ -1,3 +1,4 @@
+use crate::printer::Printer;
 use crate::screen::Screen;
 use crate::vector::Vector2;
 use crate::Term;
@@ -7,6 +8,11 @@ use std::time::Duration;
 pub struct Cursor<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
 
 impl<'a, 'b> Cursor<'a, 'b> {
+    #[must_use]
+    pub fn printer(self) -> Printer<'a, 'b> {
+        Printer(self.0)
+    }
+
     #[must_use]
     pub fn screen(self) -> Screen<'a, 'b> {
         Screen(self.0)

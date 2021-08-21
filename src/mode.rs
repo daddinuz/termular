@@ -3,8 +3,9 @@ use std::os::unix::io::{AsRawFd, RawFd};
 use std::sync::Once;
 use termios::{cfmakeraw, tcsetattr, Termios, TCSANOW};
 
+// From: (https://en.wikipedia.org/wiki/Terminal_mode)
 pub enum Mode {
-    Native,
+    Cooked,
     Raw,
 }
 
@@ -21,7 +22,7 @@ pub fn set(mode: Mode) -> io::Result<()> {
     let state = unsafe { STATE.as_ref().unwrap() };
 
     match mode {
-        Mode::Native => tcsetattr(descriptor, TCSANOW, state),
+        Mode::Cooked => tcsetattr(descriptor, TCSANOW, state),
         Mode::Raw => {
             let mut raw_state = *state;
             cfmakeraw(&mut raw_state);

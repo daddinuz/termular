@@ -3,13 +3,15 @@
 pub mod cursor;
 mod mode;
 pub mod nio;
+pub mod printer;
 pub mod screen;
 pub mod vector;
 
 use crate::cursor::Cursor;
 pub use crate::mode::Mode;
 use crate::nio::NonblockingStdin;
-use crate::screen::Screen;
+use crate::printer::Printer;
+use crate::screen::{Buffer, Screen};
 use crate::vector::Vector2;
 
 use libc::{ioctl, winsize, TIOCGWINSZ};
@@ -35,13 +37,18 @@ impl<'a> Term<'a> {
     }
 
     #[must_use]
-    pub fn screen(&mut self) -> Screen<'a, '_> {
-        Screen(Ok(self))
+    pub fn cursor(&mut self) -> Cursor<'a, '_> {
+        Cursor(Ok(self))
     }
 
     #[must_use]
-    pub fn cursor(&mut self) -> Cursor<'a, '_> {
-        Cursor(Ok(self))
+    pub fn printer(&mut self) -> Printer<'a, '_> {
+        Printer(Ok(self))
+    }
+
+    #[must_use]
+    pub fn screen(&mut self) -> Screen<'a, '_> {
+        Screen(Ok(self))
     }
 
     #[must_use]
@@ -97,8 +104,15 @@ impl<'a> Term<'a> {
 
 impl<'a> Drop for Term<'a> {
     fn drop(&mut self) {
-        best_effort(self.stdout.flush());
-        best_effort(self.set_mode(Mode::Native));
+        best_effort(self.set_mode(Mode::Raw));
+        best_effort(self.screen().set_buffer(Buffer::Alternative).flush());
+
+        // From: (https://en.wikipedia.org/wiki/ANSI_escape_code#Fs_Escape_sequences)
+        // RIS Reset to Initial State
+        best_effort(write!(self.stderr_mut(), "\x1Bc"));
+
+        best_effort(self.screen().set_buffer(Buffer::Canonical).flush());
+        best_effort(self.set_mode(Mode::Cooked));
     }
 }
 

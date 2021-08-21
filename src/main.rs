@@ -1,38 +1,36 @@
-use std::{io, str, time::Duration};
-use term::{screen::Buffer, Mode, Term};
+use std::{io, time::Duration};
+use term::printer::{Color, FontWeight};
+use term::screen::Buffer;
+use term::{Mode, Term};
 
 fn main() {
     let (stdout, stderr) = (io::stdout(), io::stderr());
     let mut term = Term::with(stdout.lock(), stderr.lock());
-
     let size = term.size().unwrap();
+
     term.set_mode(Mode::Raw).unwrap();
-    term.cursor()
-        .save()
-        .screen()
+    term.screen()
         .set_buffer(Buffer::Alternative)
         .clear()
         .cursor()
-        .set_position((8, 8))
-        .flush()
-        .unwrap();
-
-    let mut buf = Vec::new();
-    let result = term
-        .stdin_mut()
-        .read_timeout_until(b' ', &mut buf, Duration::from_secs(5));
-
-    term.screen()
-        .clear()
-        .set_buffer(Buffer::Canonical)
+        .hide()
+        .set_position((size / 2) - (5, 1).into())
+        .printer()
+        .set_weight(FontWeight::Bold)
+        .set_foreground(Color::Green)
+        .print("Hello world")
         .cursor()
-        .restore()
+        .set_position((size / 2) - (5, 0).into())
+        .printer()
+        .reset()
+        .print("- <SPACE> -")
         .flush()
         .unwrap();
 
-    // flush buffers, release streams locks and restore term::Mode::Native.
-    drop(term);
+    term.stdin_mut()
+        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(5))
+        .unwrap();
 
-    println!("{:?}", size);
-    println!("{:?}", str::from_utf8(&buf[..result.unwrap_or(0)]));
+    // flush buffers, release streams locks and restore terminal state.
+    drop(term);
 }

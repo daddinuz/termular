@@ -1,4 +1,5 @@
 use crate::cursor::Cursor;
+use crate::printer::Printer;
 use crate::Term;
 use std::io::{self, Write};
 
@@ -14,6 +15,11 @@ impl<'a, 'b> Screen<'a, 'b> {
     #[must_use]
     pub fn cursor(self) -> Cursor<'a, 'b> {
         Cursor(self.0)
+    }
+
+    #[must_use]
+    pub fn printer(self) -> Printer<'a, 'b> {
+        Printer(self.0)
     }
 
     #[must_use]
