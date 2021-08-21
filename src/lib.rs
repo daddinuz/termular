@@ -97,7 +97,7 @@ impl<'a> Term<'a> {
         if unsafe { ioctl(fd, TIOCGWINSZ, &mut term as *mut _) } == -1 {
             Err(io::Error::last_os_error())
         } else {
-            Ok((term.ws_col, term.ws_row).into())
+            Ok([term.ws_col, term.ws_row].into())
         }
     }
 }

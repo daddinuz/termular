@@ -26,18 +26,6 @@ impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
     }
 }
 
-impl<T> From<(T, T)> for Vector2<T> {
-    fn from(value: (T, T)) -> Self {
-        Self([value.0, value.1])
-    }
-}
-
-impl<T> From<(T, T, T)> for Vector3<T> {
-    fn from(value: (T, T, T)) -> Self {
-        Self([value.0, value.1, value.2])
-    }
-}
-
 impl<T, const N: usize> Deref for Vector<T, N> {
     type Target = [T; N];
 
@@ -61,37 +49,41 @@ impl<T: Copy + Neg<Output = T>, const N: usize> Neg for Vector<T, N> {
     }
 }
 
-impl<T: Copy + Add<Output = T>, const N: usize> Add for Vector<T, N> {
+impl<T: Copy + Add<Output = T>, Rhs: Into<Vector<T, N>>, const N: usize> Add<Rhs> for Vector<T, N> {
     type Output = Self;
 
-    fn add(mut self, rhs: Self) -> Self::Output {
-        self.iter_mut().zip(rhs.iter()).for_each(|(l, r)| {
+    fn add(mut self, rhs: Rhs) -> Self::Output {
+        self.iter_mut().zip(rhs.into().iter()).for_each(|(l, r)| {
             *l = *l + *r;
         });
         self
     }
 }
 
-impl<T: Copy + AddAssign, const N: usize> AddAssign for Vector<T, N> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.iter_mut().zip(rhs.iter()).for_each(|(l, r)| *l += *r);
+impl<T: Copy + AddAssign, Rhs: Into<Vector<T, N>>, const N: usize> AddAssign<Rhs> for Vector<T, N> {
+    fn add_assign(&mut self, rhs: Rhs) {
+        self.iter_mut()
+            .zip(rhs.into().iter())
+            .for_each(|(l, r)| *l += *r);
     }
 }
 
-impl<T: Copy + Sub<Output = T>, const N: usize> Sub for Vector<T, N> {
+impl<T: Copy + Sub<Output = T>, Rhs: Into<Vector<T, N>>, const N: usize> Sub<Rhs> for Vector<T, N> {
     type Output = Self;
 
-    fn sub(mut self, rhs: Self) -> Self::Output {
-        self.iter_mut().zip(rhs.iter()).for_each(|(l, r)| {
+    fn sub(mut self, rhs: Rhs) -> Self::Output {
+        self.iter_mut().zip(rhs.into().iter()).for_each(|(l, r)| {
             *l = *l - *r;
         });
         self
     }
 }
 
-impl<T: Copy + SubAssign, const N: usize> SubAssign for Vector<T, N> {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.iter_mut().zip(rhs.iter()).for_each(|(l, r)| *l -= *r);
+impl<T: Copy + SubAssign, Rhs: Into<Vector<T, N>>, const N: usize> SubAssign<Rhs> for Vector<T, N> {
+    fn sub_assign(&mut self, rhs: Rhs) {
+        self.iter_mut()
+            .zip(rhs.into().iter())
+            .for_each(|(l, r)| *l -= *r);
     }
 }
 

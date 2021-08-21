@@ -75,12 +75,12 @@ impl<'a, 'b> Cursor<'a, 'b> {
             [.., b'\x1B', b'[', row, b';', col, b'R'] => {
                 let row = u16::from(row - b'1');
                 let col = u16::from(col - b'1');
-                Ok((col, row).into())
+                Ok([col, row].into())
             }
             [.., b'\x1B', b'[', row10, row, b';', col10, col, b'R'] => {
                 let row = (u16::from(row10 - b'0') * 10 + u16::from(row - b'0')) - 1;
                 let col = (u16::from(col10 - b'0') * 10 + u16::from(col - b'0')) - 1;
-                Ok((col, row).into())
+                Ok([col, row].into())
             }
             _ => unreachable!("{:?}", buf),
         }
@@ -88,7 +88,7 @@ impl<'a, 'b> Cursor<'a, 'b> {
 
     #[must_use]
     pub fn set_position(self, pos: impl Into<Vector2<u16>>) -> Self {
-        let pos = pos.into() + (1, 1).into();
+        let pos = pos.into() + [1, 1];
         self.chain(|t| write!(t.stdout_mut(), "\x1B[{};{}H", pos.y(), pos.x()))
     }
 

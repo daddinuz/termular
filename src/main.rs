@@ -6,7 +6,7 @@ use term::{Mode, Term};
 fn main() {
     let (stdout, stderr) = (io::stdout(), io::stderr());
     let mut term = Term::with(stdout.lock(), stderr.lock());
-    let size = term.size().unwrap();
+    let center = term.size().unwrap() / 2;
 
     term.set_mode(Mode::Raw).unwrap();
     term.screen()
@@ -14,13 +14,13 @@ fn main() {
         .clear()
         .cursor()
         .hide()
-        .set_position((size / 2) - (5, 1).into())
+        .set_position(center - [5, 1])
         .printer()
         .set_weight(FontWeight::Bold)
         .set_foreground(Color::Green)
         .print("Hello world")
         .cursor()
-        .set_position((size / 2) - (5, 0).into())
+        .set_position(center - [5, 0])
         .printer()
         .reset()
         .print("- <SPACE> -")
