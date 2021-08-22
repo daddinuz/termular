@@ -10,7 +10,7 @@ fn main() {
 
     term.set_mode(Mode::Raw).unwrap();
     term.screen()
-        .set_buffer(Buffer::Alternative)
+        .set_buffer(Buffer::Alternate)
         .clear()
         .cursor()
         .hide()
@@ -27,9 +27,9 @@ fn main() {
         .flush()
         .unwrap();
 
-    term.stdin_mut()
-        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(5))
-        .unwrap();
+    let _ = term
+        .stdin_mut()
+        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(5));
 
     // flush buffers, release streams locks and restore terminal state.
     drop(term);

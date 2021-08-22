@@ -5,8 +5,8 @@ use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Buffer {
-    Canonical,
-    Alternative,
+    Primary,
+    Alternate,
 }
 
 pub struct Screen<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
@@ -30,8 +30,8 @@ impl<'a, 'b> Screen<'a, 'b> {
     #[must_use]
     pub fn set_buffer(self, buffer: Buffer) -> Self {
         self.chain(|t| match buffer {
-            Buffer::Canonical => write!(t.stdout_mut(), "\x1B[?1049l"),
-            Buffer::Alternative => write!(t.stdout_mut(), "\x1B[?1049h"),
+            Buffer::Primary => write!(t.stdout_mut(), "\x1B[?1049l"),
+            Buffer::Alternate => write!(t.stdout_mut(), "\x1B[?1049h"),
         })
     }
 
