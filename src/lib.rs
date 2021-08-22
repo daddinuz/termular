@@ -105,13 +105,18 @@ impl<'a> Term<'a> {
 impl<'a> Drop for Term<'a> {
     fn drop(&mut self) {
         best_effort(self.set_mode(Mode::Raw));
-        best_effort(self.screen().set_buffer(Buffer::Alternate).flush());
-
-        // From: (https://en.wikipedia.org/wiki/ANSI_escape_code#Fs_Escape_sequences)
-        // RIS Reset to Initial State
-        best_effort(write!(self.stderr_mut(), "\x1Bc"));
-
-        best_effort(self.screen().set_buffer(Buffer::Primary).flush());
+        best_effort(
+            self.screen()
+                .set_buffer(Buffer::Alternate)
+                .cursor()
+                .show()
+                .printer()
+                .reset()
+                .screen()
+                .clear()
+                .set_buffer(Buffer::Primary)
+                .flush(),
+        );
         best_effort(self.set_mode(Mode::Cooked));
     }
 }
