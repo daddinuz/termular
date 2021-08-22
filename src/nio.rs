@@ -1,16 +1,18 @@
 use std::io::{self, Read};
 use std::sync::mpsc::{self, Receiver};
-use std::thread;
 use std::time::{Duration, Instant};
+use std::{mem, thread};
 
 pub struct StdinNonblock {
     receiver: Receiver<io::Result<u8>>,
+    last_err: io::Result<()>,
 }
 
 impl StdinNonblock {
     #[must_use]
     fn instance() -> Self {
         let (sender, receiver) = mpsc::channel();
+        let last_err = Ok(());
 
         thread::spawn(move || {
             let stdin = io::stdin();
@@ -22,40 +24,66 @@ impl StdinNonblock {
             }
         });
 
-        Self { receiver }
+        Self { receiver, last_err }
     }
 }
 
 impl Read for StdinNonblock {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        buf.iter_mut()
-            // From: (https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip)
-            // >>> If the first iterator returns None, zip will short-circuit and next will not be called on the second iterator.
-            .zip(self.receiver.try_iter())
-            .try_fold(0, |counter, (item, io)| {
-                io.map(|byte| {
+        // If last time we had an error, return the error.
+        mem::replace(&mut self.last_err, Ok(()))?;
+
+        let mut counter = 0;
+
+        // From: (https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip)
+        // >>> If the first iterator returns None, zip will short-circuit and next will not be called on the second iterator.
+        for (item, io) in buf.iter_mut().zip(self.receiver.try_iter()) {
+            match io {
+                Ok(byte) => {
                     *item = byte;
-                    counter + 1
-                })
-            })
+                    counter += 1;
+                }
+                Err(err) => {
+                    if counter > 0 {
+                        self.last_err = Err(err);
+                        break;
+                    }
+                    return Err(err);
+                }
+            }
+        }
+
+        Ok(counter)
     }
 }
 
 impl StdinNonblock {
     pub fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize> {
+        // If last time we had an error, return the error.
+        mem::replace(&mut self.last_err, Ok(()))?;
+
         let mut counter = 0;
         let deadline = Instant::now() + timeout;
+
         for item in buf.iter_mut() {
             match self.receiver.recv_deadline(deadline) {
-                Ok(io) => {
-                    *item = io?;
-                    counter += 1;
-                }
+                Ok(io) => match io {
+                    Ok(byte) => {
+                        *item = byte;
+                        counter += 1;
+                    }
+                    Err(err) => {
+                        if counter > 0 {
+                            self.last_err = Err(err);
+                            break;
+                        }
+                        return Err(err);
+                    }
+                },
                 Err(err) => {
                     if counter > 0 {
                         break;
                     }
-
                     return Err(io::Error::new(io::ErrorKind::TimedOut, err));
                 }
             }
@@ -70,22 +98,33 @@ impl StdinNonblock {
         buf: &mut Vec<u8>,
         timeout: Duration,
     ) -> io::Result<usize> {
+        // If last time we had an error, return the error.
+        mem::replace(&mut self.last_err, Ok(()))?;
+
         let start_len = buf.len();
         let deadline = Instant::now() + timeout;
+
         loop {
             match self.receiver.recv_deadline(deadline) {
-                Ok(io) => {
-                    let byte = io?;
-                    buf.push(byte);
-                    if byte == delimiter {
-                        break;
+                Ok(io) => match io {
+                    Ok(byte) => {
+                        buf.push(byte);
+                        if byte == delimiter {
+                            break;
+                        }
                     }
-                }
+                    Err(err) => {
+                        if buf.len() > start_len {
+                            self.last_err = Err(err);
+                            break;
+                        }
+                        return Err(err);
+                    }
+                },
                 Err(err) => {
                     if buf.len() > start_len {
                         break;
                     }
-
                     return Err(io::Error::new(io::ErrorKind::TimedOut, err));
                 }
             }
