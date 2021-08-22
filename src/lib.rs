@@ -9,7 +9,7 @@ pub mod vector;
 
 use crate::cursor::Cursor;
 pub use crate::mode::Mode;
-use crate::nio::NonblockingStdin;
+use crate::nio::StdinNonblock;
 use crate::printer::Printer;
 use crate::screen::{Buffer, Screen};
 use crate::vector::Vector2;
@@ -19,7 +19,7 @@ use std::io::{self, StderrLock, StdoutLock, Write};
 use std::os::unix::io::AsRawFd;
 
 pub struct Term<'a> {
-    stdin: NonblockingStdin,
+    stdin: StdinNonblock,
     stdout: StdoutLock<'a>,
     stderr: StderrLock<'a>,
 }
@@ -52,12 +52,12 @@ impl<'a> Term<'a> {
     }
 
     #[must_use]
-    pub fn stdin(&self) -> &NonblockingStdin {
+    pub fn stdin(&self) -> &StdinNonblock {
         &self.stdin
     }
 
     #[must_use]
-    pub fn stdin_mut(&mut self) -> &mut NonblockingStdin {
+    pub fn stdin_mut(&mut self) -> &mut StdinNonblock {
         &mut self.stdin
     }
 

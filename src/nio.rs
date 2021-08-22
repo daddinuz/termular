@@ -3,11 +3,11 @@ use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub struct NonblockingStdin {
+pub struct StdinNonblock {
     receiver: Receiver<io::Result<u8>>,
 }
 
-impl NonblockingStdin {
+impl StdinNonblock {
     #[must_use]
     fn instance() -> Self {
         let (sender, receiver) = mpsc::channel();
@@ -26,7 +26,7 @@ impl NonblockingStdin {
     }
 }
 
-impl Read for NonblockingStdin {
+impl Read for StdinNonblock {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         buf.iter_mut()
             // From: (https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip)
@@ -41,7 +41,7 @@ impl Read for NonblockingStdin {
     }
 }
 
-impl NonblockingStdin {
+impl StdinNonblock {
     pub fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize> {
         let mut counter = 0;
         let deadline = Instant::now() + timeout;
@@ -95,6 +95,6 @@ impl NonblockingStdin {
     }
 }
 
-pub fn stdin() -> NonblockingStdin {
-    NonblockingStdin::instance()
+pub fn stdin() -> StdinNonblock {
+    StdinNonblock::instance()
 }
