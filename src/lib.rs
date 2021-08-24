@@ -1,7 +1,7 @@
 #![feature(deadline_api)]
 
 pub mod cursor;
-mod mode;
+pub(crate) mod mode;
 pub mod nio;
 pub mod printer;
 pub mod screen;

@@ -1,9 +1,10 @@
 use crate::printer::Printer;
 use crate::screen::Screen;
 use crate::vector::Vector2;
-use crate::Term;
+use crate::{mode, Mode, Term};
 use std::io::{self, Write};
 use std::time::Duration;
+use std::{error, str};
 
 pub struct Cursor<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
 
@@ -64,26 +65,17 @@ impl<'a, 'b> Cursor<'a, 'b> {
 
     pub fn position(self) -> io::Result<Vector2<u16>> {
         let term = self.0?;
-        let mut buf = Vec::new();
 
         term.stdout_mut().flush()?;
-        term.stderr_mut().write_all(b"\x1B[6n")?;
-        term.stdin_mut()
-            .read_timeout_until(b'R', &mut buf, Duration::from_millis(512))?;
+        mode::with(Mode::Raw, || {
+            let mut buf = Vec::new();
 
-        match &buf[..] {
-            [.., b'\x1B', b'[', row, b';', col, b'R'] => {
-                let row = u16::from(row - b'1');
-                let col = u16::from(col - b'1');
-                Ok([col, row].into())
-            }
-            [.., b'\x1B', b'[', row10, row, b';', col10, col, b'R'] => {
-                let row = (u16::from(row10 - b'0') * 10 + u16::from(row - b'0')) - 1;
-                let col = (u16::from(col10 - b'0') * 10 + u16::from(col - b'0')) - 1;
-                Ok([col, row].into())
-            }
-            _ => unreachable!("{:?}", buf),
-        }
+            term.stderr_mut().write_all(b"\x1B[6n")?;
+            term.stdin_mut()
+                .read_timeout_until(b'R', &mut buf, Duration::from_secs(1))?;
+
+            parse_position(&buf)
+        })?
     }
 
     #[must_use]
@@ -100,4 +92,44 @@ impl<'a, 'b> Cursor<'a, 'b> {
     {
         Self(self.0.and_then(|t| f(t).map(|_| t)))
     }
+}
+
+fn parse_position(bytes: &[u8]) -> io::Result<Vector2<u16>> {
+    let delimiter = bytes
+        .iter()
+        .rposition(|b| *b == b'R')
+        .ok_or_else(|| make_err("Unable to retrieve position: missing token `R`"))?;
+
+    let semicolon = bytes[..delimiter]
+        .iter()
+        .rposition(|b| *b == b';')
+        .ok_or_else(|| make_err("Unable to retrieve position: missing token `;`"))?;
+
+    let square_bracket = bytes[..semicolon]
+        .iter()
+        .rposition(|b| *b == b'[')
+        .ok_or_else(|| make_err("Unable to retrieve position: missing token `[`"))?;
+
+    let row = parse::<u16>(&bytes[square_bracket + 1..semicolon])?;
+    let col = parse::<u16>(&bytes[semicolon + 1..delimiter])?;
+    Ok([col - 1, row - 1].into())
+}
+
+fn parse<T>(bytes: &[u8]) -> io::Result<T>
+where
+    T: str::FromStr,
+    <T as str::FromStr>::Err: Into<Box<dyn error::Error + Send + Sync>>,
+{
+    str::from_utf8(bytes)
+        .map_err(make_err)
+        .and_then(|s| s.parse().map_err(make_err))
+}
+
+#[inline]
+#[must_use]
+fn make_err<E>(err: E) -> io::Error
+where
+    E: Into<Box<dyn error::Error + Send + Sync>>,
+{
+    io::Error::new(io::ErrorKind::Other, err)
 }

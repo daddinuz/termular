@@ -31,6 +31,16 @@ pub fn set(mode: Mode) -> io::Result<()> {
     }
 }
 
+pub fn with<T, F>(mode: Mode, f: F) -> io::Result<T>
+where
+    F: FnOnce() -> T,
+{
+    let descriptor = stdin_descriptor();
+    let state = Termios::from_fd(descriptor)?;
+    let result = set(mode).map(|_| f());
+    tcsetattr(descriptor, TCSANOW, &state).and(result)
+}
+
 fn stdin_descriptor() -> RawFd {
     let stdin = io::stdin();
     stdin.as_raw_fd()
