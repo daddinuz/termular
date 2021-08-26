@@ -18,10 +18,10 @@ impl StdinNonblock {
             let stdin = io::stdin();
             let handle = stdin.lock();
             let mut stream = handle.bytes();
-            loop {
-                // TODO: think twice before unwrapping.
-                stream.try_for_each(|io| sender.send(io)).unwrap();
-            }
+
+            // From: (https://doc.rust-lang.org/std/sync/mpsc/struct.SendError.html)
+            // >>> A send operation can only fail if the receiving end of a channel is disconnected, implying that the data could never be received.
+            while stream.try_for_each(|io| sender.send(io)).is_ok() {}
         });
 
         Self { receiver, last_err }
