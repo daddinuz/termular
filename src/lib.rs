@@ -31,18 +31,17 @@ pub struct Term<'a> {
 }
 
 impl<'a> Term<'a> {
-    #[must_use]
-    pub fn with(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> Self {
-        best_effort(stdout.flush());
-        let state = State::capture().unwrap(); // FIXME
+    pub fn init(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Self> {
+        let state = State::capture()?;
         let stdin = nio::stdin();
+        stdout.flush()?;
 
-        Self {
+        Ok(Self {
             state,
             stdin,
             stdout,
             stderr,
-        }
+        })
     }
 
     #[must_use]

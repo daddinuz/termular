@@ -3,12 +3,12 @@ use term::printer::{Color, FontWeight, Style};
 use term::screen::Buffer;
 use term::{Mode, Term};
 
-fn main() {
+fn main() -> io::Result<()> {
     let (stdout, stderr) = (io::stdout(), io::stderr());
-    let mut term = Term::with(stdout.lock(), stderr.lock());
-    let center = term.size().unwrap() / 2;
+    let mut term = Term::init(stdout.lock(), stderr.lock())?;
+    let center = term.size()? / 2;
 
-    term.set_mode(Mode::Raw).unwrap();
+    term.set_mode(Mode::Raw)?;
     term.screen()
         .set_buffer(Buffer::Alternate)
         .clear()
@@ -22,13 +22,11 @@ fn main() {
         .set_position(center - [5, 0])
         .printer()
         .print("- <SPACE> -")
-        .flush()
-        .unwrap();
+        .flush()?;
 
     let _ = term
         .stdin_mut()
         .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(5));
 
-    // flush buffers, release streams locks and restore terminal state.
-    drop(term);
+    Ok(())
 }
