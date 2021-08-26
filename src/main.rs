@@ -1,5 +1,5 @@
 use std::{io, time::Duration};
-use term::printer::{Color, FontWeight};
+use term::printer::{Color, FontWeight, Style};
 use term::screen::Buffer;
 use term::{Mode, Term};
 
@@ -16,13 +16,11 @@ fn main() {
         .hide()
         .set_position(center - [5, 1])
         .printer()
-        .set_weight(FontWeight::Bold)
-        .set_foreground(Color::Green)
+        .using(Style::from(FontWeight::Bold).with_foreground(Color::Green))
         .print("Hello world")
         .cursor()
         .set_position(center - [5, 0])
         .printer()
-        .reset()
         .print("- <SPACE> -")
         .flush()
         .unwrap();
