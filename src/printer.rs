@@ -137,13 +137,13 @@ impl<'a, 'b> StyledPrinter<'a, 'b> {
         Printer(self.term.and_then(|t| {
             write!(
                 t.stdout_mut(),
-                "{}{}{}{}{}{}",
-                foreground_fmt(style.foreground()),
-                background_fmt(style.background()),
-                decoration_fmt(style.decoration()),
-                weight_fmt(style.weight()),
+                "\x1B[{};{};{};{}m{}\x1B[{}m",
+                fmt_foreground(style.foreground()),
+                fmt_background(style.background()),
+                fmt_decoration(style.decoration()),
+                fmt_weight(style.weight()),
                 s.as_ref(),
-                reset_fmt()
+                fmt_restore()
             )
             .map(|_| t)
         }))
@@ -165,27 +165,27 @@ impl<'a, 'b> Printer<'a, 'b> {
 
     #[must_use]
     pub fn set_weight(self, weight: FontWeight) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", weight_fmt(weight)))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[{}m", fmt_weight(weight)))
     }
 
     #[must_use]
     pub fn set_decoration(self, decoration: TextDecoration) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", decoration_fmt(decoration)))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[{}m", fmt_decoration(decoration)))
     }
 
     #[must_use]
     pub fn set_foreground(self, color: Color) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", foreground_fmt(color)))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[{}m", fmt_foreground(color)))
     }
 
     #[must_use]
     pub fn set_background(self, color: Color) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", background_fmt(color)))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[{}m", fmt_background(color)))
     }
 
     #[must_use]
-    pub fn reset(self) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", reset_fmt()))
+    pub fn restore(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[{}m", fmt_restore()))
     }
 
     #[must_use]
@@ -216,54 +216,54 @@ impl<'a, 'b> Printer<'a, 'b> {
 }
 
 #[must_use]
-fn weight_fmt(weight: FontWeight) -> &'static str {
+fn fmt_weight(weight: FontWeight) -> &'static str {
     match weight {
-        FontWeight::Normal => "\x1B[22m",
-        FontWeight::Light => "\x1B[2m",
-        FontWeight::Bold => "\x1B[1m",
+        FontWeight::Normal => "22",
+        FontWeight::Light => "2",
+        FontWeight::Bold => "1",
     }
 }
 
 #[must_use]
-fn decoration_fmt(decoration: TextDecoration) -> &'static str {
+fn fmt_decoration(decoration: TextDecoration) -> &'static str {
     match decoration {
-        TextDecoration::None => "\x1B[29;24m",
-        TextDecoration::Strike => "\x1B[9m",
-        TextDecoration::Underline => "\x1B[4m",
+        TextDecoration::None => "29;24",
+        TextDecoration::Strike => "9",
+        TextDecoration::Underline => "4",
     }
 }
 
 #[must_use]
-fn foreground_fmt(color: Color) -> &'static str {
+fn fmt_foreground(color: Color) -> &'static str {
     match color {
-        Color::Default => "\x1B[39m",
-        Color::Black => "\x1B[30m",
-        Color::Red => "\x1B[31m",
-        Color::Green => "\x1B[32m",
-        Color::Yellow => "\x1B[33m",
-        Color::Blue => "\x1B[34m",
-        Color::Magenta => "\x1B[35m",
-        Color::Cyan => "\x1B[36m",
-        Color::White => "\x1B[37m",
+        Color::Default => "39",
+        Color::Black => "30",
+        Color::Red => "31",
+        Color::Green => "32",
+        Color::Yellow => "33",
+        Color::Blue => "34",
+        Color::Magenta => "35",
+        Color::Cyan => "36",
+        Color::White => "37",
     }
 }
 
 #[must_use]
-fn background_fmt(color: Color) -> &'static str {
+fn fmt_background(color: Color) -> &'static str {
     match color {
-        Color::Default => "\x1B[49m",
-        Color::Black => "\x1B[40m",
-        Color::Red => "\x1B[41m",
-        Color::Green => "\x1B[42m",
-        Color::Yellow => "\x1B[43m",
-        Color::Blue => "\x1B[44m",
-        Color::Magenta => "\x1B[45m",
-        Color::Cyan => "\x1B[46m",
-        Color::White => "\x1B[47m",
+        Color::Default => "49",
+        Color::Black => "40",
+        Color::Red => "41",
+        Color::Green => "42",
+        Color::Yellow => "43",
+        Color::Blue => "44",
+        Color::Magenta => "45",
+        Color::Cyan => "46",
+        Color::White => "47",
     }
 }
 
 #[must_use]
-fn reset_fmt() -> &'static str {
-    "\x1B[22;29;24;39;49m"
+fn fmt_restore() -> &'static str {
+    "22;29;24;39;49"
 }

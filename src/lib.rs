@@ -110,7 +110,7 @@ impl<'a> Drop for Term<'a> {
                 .cursor()
                 .show()
                 .printer()
-                .reset()
+                .restore()
                 .screen()
                 .clear()
                 .set_buffer(Buffer::Primary)
