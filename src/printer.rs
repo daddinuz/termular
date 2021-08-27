@@ -1,6 +1,7 @@
 use crate::cursor::Cursor;
 use crate::screen::Screen;
 use crate::Term;
+use std::fmt::{Debug, Display};
 use std::io::{self, Write};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -132,7 +133,7 @@ pub struct StyledPrinter<'a: 'b, 'b> {
 
 impl<'a, 'b> StyledPrinter<'a, 'b> {
     #[must_use]
-    pub fn print(self, s: impl AsRef<str>) -> Printer<'a, 'b> {
+    pub fn print(self, any: impl Display) -> Printer<'a, 'b> {
         let style = self.style;
         Printer(self.term.and_then(|t| {
             write!(
@@ -142,7 +143,25 @@ impl<'a, 'b> StyledPrinter<'a, 'b> {
                 fmt_background(style.background()),
                 fmt_decoration(style.decoration()),
                 fmt_weight(style.weight()),
-                s.as_ref(),
+                any,
+                fmt_restore()
+            )
+            .map(|_| t)
+        }))
+    }
+
+    #[must_use]
+    pub fn debug(self, any: impl Debug) -> Printer<'a, 'b> {
+        let style = self.style;
+        Printer(self.term.and_then(|t| {
+            write!(
+                t.stdout_mut(),
+                "\x1B[{};{};{};{}m{:?}\x1B[{}m",
+                fmt_foreground(style.foreground()),
+                fmt_background(style.background()),
+                fmt_decoration(style.decoration()),
+                fmt_weight(style.weight()),
+                any,
                 fmt_restore()
             )
             .map(|_| t)
@@ -189,8 +208,13 @@ impl<'a, 'b> Printer<'a, 'b> {
     }
 
     #[must_use]
-    pub fn print(self, s: impl AsRef<str>) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "{}", s.as_ref()))
+    pub fn print(self, any: impl Display) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "{}", any))
+    }
+
+    #[must_use]
+    pub fn debug(self, any: impl Debug) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "{:?}", any))
     }
 
     #[must_use]
