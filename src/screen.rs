@@ -9,6 +9,12 @@ pub enum Buffer {
     Alternate,
 }
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum Scroll {
+    Up(u16),
+    Down(u16),
+}
+
 pub struct Screen<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
 
 impl<'a, 'b> Screen<'a, 'b> {
@@ -23,16 +29,24 @@ impl<'a, 'b> Screen<'a, 'b> {
     }
 
     #[must_use]
-    pub fn clear(self) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "\x1B[2J"))
-    }
-
-    #[must_use]
     pub fn set_buffer(self, buffer: Buffer) -> Self {
         self.chain(|t| match buffer {
             Buffer::Primary => write!(t.stdout_mut(), "\x1B[?1049l"),
             Buffer::Alternate => write!(t.stdout_mut(), "\x1B[?1049h"),
         })
+    }
+
+    #[must_use]
+    pub fn scroll(self, scroll: Scroll) -> Self {
+        self.chain(|t| match scroll {
+            Scroll::Up(rows) => write!(t.stdout_mut(), "\x1B[{}S", rows),
+            Scroll::Down(rows) => write!(t.stdout_mut(), "\x1B[{}T", rows),
+        })
+    }
+
+    #[must_use]
+    pub fn clear(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[2J"))
     }
 
     pub fn flush(self) -> io::Result<()> {
