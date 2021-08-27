@@ -117,6 +117,12 @@ impl<T: Copy + DivAssign, const N: usize> DivAssign<T> for Vector<T, N> {
     }
 }
 
+impl<T, const N: usize> Vector<T, N> {
+    pub fn into_inner(self) -> [T; N] {
+        self.0
+    }
+}
+
 impl<T: Copy> Vector2<T> {
     pub fn x(&self) -> T {
         self[0]
