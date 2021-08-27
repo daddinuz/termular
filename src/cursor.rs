@@ -92,9 +92,28 @@ impl<'a, 'b> Cursor<'a, 'b> {
     }
 
     #[must_use]
-    pub fn set_position(self, pos: impl Into<Vector2<u16>>) -> Self {
-        let pos = pos.into() + [1, 1];
-        self.chain(|t| write!(t.stdout_mut(), "\x1B[{};{}H", pos.y(), pos.x()))
+    pub fn erase_below(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[0J"))
+    }
+
+    #[must_use]
+    pub fn erase_above(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[1J"))
+    }
+
+    #[must_use]
+    pub fn erase_forward(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[0K"))
+    }
+
+    #[must_use]
+    pub fn erase_backward(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[1K"))
+    }
+
+    #[must_use]
+    pub fn erase_line(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[2K"))
     }
 
     #[inline]
