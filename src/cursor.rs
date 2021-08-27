@@ -63,6 +63,19 @@ impl<'a, 'b> Cursor<'a, 'b> {
         self.0?.stdout_mut().flush()
     }
 
+    #[must_use]
+    pub fn set_position(self, pos: impl Into<Vector2<u16>>) -> Self {
+        let [x, y] = pos.into().into_inner();
+        self.chain(|t| {
+            write!(
+                t.stdout_mut(),
+                "\x1B[{};{}H",
+                y.saturating_add(1),
+                x.saturating_add(1)
+            )
+        })
+    }
+
     pub fn position(self) -> io::Result<Vector2<u16>> {
         let term = self.0?;
 
@@ -112,7 +125,7 @@ fn parse_position(bytes: &[u8]) -> io::Result<Vector2<u16>> {
 
     let row = parse::<u16>(&bytes[square_bracket + 1..semicolon])?;
     let col = parse::<u16>(&bytes[semicolon + 1..delimiter])?;
-    Ok([col - 1, row - 1].into())
+    Ok([col.saturating_sub(1), row.saturating_sub(1)].into())
 }
 
 fn parse<T>(bytes: &[u8]) -> io::Result<T>
