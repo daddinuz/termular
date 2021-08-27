@@ -46,7 +46,12 @@ impl<'a, 'b> Screen<'a, 'b> {
 
     #[must_use]
     pub fn clear(self) -> Self {
-        self.chain(|t| write!(t.stdout_mut(), "\x1B[2J"))
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[2J\x1B[1;1H"))
+    }
+
+    #[must_use]
+    pub fn clear_line(self) -> Self {
+        self.chain(|t| write!(t.stdout_mut(), "\x1B[2K"))
     }
 
     pub fn flush(self) -> io::Result<()> {
