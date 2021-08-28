@@ -8,24 +8,22 @@ pub struct StdinNonblock {
     last_err: io::Result<()>,
 }
 
-impl StdinNonblock {
-    #[must_use]
-    fn instance() -> Self {
-        let (sender, receiver) = mpsc::channel();
-        let last_err = Ok(());
+#[must_use]
+pub fn stdin() -> StdinNonblock {
+    let (sender, receiver) = mpsc::channel();
+    let last_err = Ok(());
 
-        thread::spawn(move || {
-            let stdin = io::stdin();
-            let handle = stdin.lock();
-            let mut stream = handle.bytes();
+    thread::spawn(move || {
+        let stdin = io::stdin();
+        let handle = stdin.lock();
+        let mut stream = handle.bytes();
 
-            // From: (https://doc.rust-lang.org/std/sync/mpsc/struct.SendError.html)
-            // >>> A send operation can only fail if the receiving end of a channel is disconnected, implying that the data could never be received.
-            while stream.try_for_each(|io| sender.send(io)).is_ok() {}
-        });
+        // From: (https://doc.rust-lang.org/std/sync/mpsc/struct.SendError.html)
+        // >>> A send operation can only fail if the receiving end of a channel is disconnected, implying that the data could never be received.
+        while stream.try_for_each(|io| sender.send(io)).is_ok() {}
+    });
 
-        Self { receiver, last_err }
-    }
+    StdinNonblock { receiver, last_err }
 }
 
 impl Read for StdinNonblock {
@@ -132,8 +130,4 @@ impl StdinNonblock {
 
         Ok(buf.len() - start_len)
     }
-}
-
-pub fn stdin() -> StdinNonblock {
-    StdinNonblock::instance()
 }
