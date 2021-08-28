@@ -118,78 +118,94 @@ impl<T: Copy + DivAssign, const N: usize> DivAssign<T> for Vector<T, N> {
 }
 
 impl<T, const N: usize> Vector<T, N> {
+    #[must_use]
     pub fn into_inner(self) -> [T; N] {
         self.0
     }
 }
 
 impl<T: Copy> Vector2<T> {
+    #[must_use]
     pub fn x(&self) -> T {
         self[0]
     }
 
+    #[must_use]
     pub fn y(&self) -> T {
         self[1]
     }
 }
 
 impl<T> Vector2<T> {
+    #[must_use]
     pub fn x_ref(&self) -> &T {
         &self[0]
     }
 
+    #[must_use]
     pub fn y_ref(&self) -> &T {
         &self[1]
     }
 }
 
 impl<T> Vector2<T> {
+    #[must_use]
     pub fn x_mut(&mut self) -> &mut T {
         &mut self[0]
     }
 
+    #[must_use]
     pub fn y_mut(&mut self) -> &mut T {
         &mut self[1]
     }
 }
 
 impl<T: Copy> Vector3<T> {
+    #[must_use]
     pub fn x(&self) -> T {
         self[0]
     }
 
+    #[must_use]
     pub fn y(&self) -> T {
         self[1]
     }
 
+    #[must_use]
     pub fn z(&self) -> T {
         self[2]
     }
 }
 
 impl<T> Vector3<T> {
+    #[must_use]
     pub fn x_ref(&self) -> &T {
         &self[0]
     }
 
+    #[must_use]
     pub fn y_ref(&self) -> &T {
         &self[1]
     }
 
+    #[must_use]
     pub fn z_ref(&self) -> &T {
         &self[2]
     }
 }
 
 impl<T> Vector3<T> {
+    #[must_use]
     pub fn x_mut(&mut self) -> &mut T {
         &mut self[0]
     }
 
+    #[must_use]
     pub fn y_mut(&mut self) -> &mut T {
         &mut self[1]
     }
 
+    #[must_use]
     pub fn z_mut(&mut self) -> &mut T {
         &mut self[2]
     }

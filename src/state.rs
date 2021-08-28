@@ -13,6 +13,7 @@ impl State {
         Termios::from_fd(stream()).map(|inner| State { inner })
     }
 
+    #[must_use]
     pub fn raw(&self) -> Self {
         let mut inner = self.inner;
         cfmakeraw(&mut inner);
@@ -48,6 +49,7 @@ where
     state.apply().and(result)
 }
 
+#[must_use]
 fn stream() -> RawFd {
     let stdin = io::stdin();
     stdin.as_raw_fd()
