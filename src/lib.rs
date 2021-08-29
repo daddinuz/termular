@@ -9,7 +9,7 @@ pub mod vector;
 pub(crate) mod state;
 
 use crate::cursor::Cursor;
-use crate::nio::StdinNonblock;
+use crate::nio::Stdin;
 use crate::printer::Printer;
 use crate::screen::{Buffer, Screen};
 use crate::state::State;
@@ -25,7 +25,7 @@ pub enum Mode {
 
 pub struct Term<'a> {
     state: State,
-    stdin: StdinNonblock,
+    stdin: Stdin,
     stdout: StdoutLock<'a>,
     stderr: StderrLock<'a>,
 }
@@ -60,12 +60,12 @@ impl<'a> Term<'a> {
     }
 
     #[must_use]
-    pub fn stdin(&self) -> &StdinNonblock {
+    pub fn stdin(&self) -> &Stdin {
         &self.stdin
     }
 
     #[must_use]
-    pub fn stdin_mut(&mut self) -> &mut StdinNonblock {
+    pub fn stdin_mut(&mut self) -> &mut Stdin {
         &mut self.stdin
     }
 

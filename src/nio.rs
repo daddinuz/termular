@@ -1,15 +1,28 @@
 use std::io::{self, Read};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
-use std::{mem, thread};
+use std::{iter, mem, thread};
 
-pub struct StdinNonblock {
-    receiver: Receiver<io::Result<u8>>,
+const READ_TIMEOUT: Duration = Duration::from_millis(8);
+
+pub trait ReadNonblock {
+    fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize>;
+
+    fn read_timeout_until(
+        &mut self,
+        delimiter: u8,
+        buf: &mut Vec<u8>,
+        timeout: Duration,
+    ) -> io::Result<usize>;
+}
+
+pub struct Stdin {
+    receiver: Receiver<io::Result<Option<u8>>>,
     last_err: io::Result<()>,
 }
 
 #[must_use]
-pub fn stdin() -> StdinNonblock {
+pub(crate) fn stdin() -> Stdin {
     let (sender, receiver) = mpsc::channel();
     let last_err = Ok(());
 
@@ -19,28 +32,47 @@ pub fn stdin() -> StdinNonblock {
         let mut stream = handle.bytes();
 
         // From: (https://doc.rust-lang.org/std/sync/mpsc/struct.SendError.html)
-        // >>> A send operation can only fail if the receiving end of a channel is disconnected, implying that the data could never be received.
-        while stream.try_for_each(|io| sender.send(io)).is_ok() {}
+        // >>> A send operation can only fail if the receiving end of a channel
+        // >>> is disconnected, implying that the data could never be received.
+        //
+        // loop until the receiving end of the channel is disconnected.
+        // EOF is transmitted as Ok(None).
+        while stream.try_for_each(|io| sender.send(io.map(Some))).is_ok() {
+            if sender.send(Ok(None)).is_err() {
+                break;
+            }
+        }
     });
 
-    StdinNonblock { receiver, last_err }
+    Stdin { receiver, last_err }
 }
 
-impl Read for StdinNonblock {
+impl Read for Stdin {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         // If last time we had an error, return the error.
         mem::replace(&mut self.last_err, Ok(()))?;
 
+        // blocking-like iterator over stdin bytes: `recv` will block until
+        // input is available, `recv_timeout` tries to pull all pending
+        // bytes from the stream. When time-out occurs EOF is assumed.
+        let stream = iter::once_with(|| self.receiver.recv().unwrap_or(Ok(None))).chain(
+            iter::from_fn(|| self.receiver.recv_timeout(READ_TIMEOUT).ok()),
+        );
         let mut counter = 0;
 
         // From: (https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.zip)
-        // >>> If the first iterator returns None, zip will short-circuit and next will not be called on the second iterator.
-        for (item, io) in buf.iter_mut().zip(self.receiver.try_iter()) {
+        // >>> If the first iterator returns None, zip will short-circuit
+        // >>> and next will not be called on the second iterator.
+        for (item, io) in buf.iter_mut().zip(stream) {
             match io {
-                Ok(byte) => {
+                Ok(Some(byte)) => {
                     *item = byte;
                     counter += 1;
+                    if byte == b'\n' {
+                        break;
+                    }
                 }
+                Ok(None) => break,
                 Err(err) => {
                     if counter > 0 {
                         self.last_err = Err(err);
@@ -55,34 +87,31 @@ impl Read for StdinNonblock {
     }
 }
 
-impl StdinNonblock {
-    pub fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize> {
+impl ReadNonblock for Stdin {
+    fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize> {
         // If last time we had an error, return the error.
         mem::replace(&mut self.last_err, Ok(()))?;
 
         let mut counter = 0;
         let deadline = Instant::now() + timeout;
+        let stream = iter::from_fn(|| self.receiver.recv_deadline(deadline).ok());
 
-        for item in buf.iter_mut() {
-            match self.receiver.recv_deadline(deadline) {
-                Ok(io) => match io {
-                    Ok(byte) => {
-                        *item = byte;
-                        counter += 1;
-                    }
-                    Err(err) => {
-                        if counter > 0 {
-                            self.last_err = Err(err);
-                            break;
-                        }
-                        return Err(err);
-                    }
-                },
-                Err(err) => {
-                    if counter > 0 {
+        for (item, io) in buf.iter_mut().zip(stream) {
+            match io {
+                Ok(Some(byte)) => {
+                    *item = byte;
+                    counter += 1;
+                    if byte == b'\n' {
                         break;
                     }
-                    return Err(io::Error::new(io::ErrorKind::TimedOut, err));
+                }
+                Ok(None) => break,
+                Err(err) => {
+                    if counter > 0 {
+                        self.last_err = Err(err);
+                        break;
+                    }
+                    return Err(err);
                 }
             }
         }
@@ -90,7 +119,7 @@ impl StdinNonblock {
         Ok(counter)
     }
 
-    pub fn read_timeout_until(
+    fn read_timeout_until(
         &mut self,
         delimiter: u8,
         buf: &mut Vec<u8>,
@@ -101,29 +130,23 @@ impl StdinNonblock {
 
         let start_len = buf.len();
         let deadline = Instant::now() + timeout;
+        let stream = iter::from_fn(|| self.receiver.recv_deadline(deadline).ok());
 
-        loop {
-            match self.receiver.recv_deadline(deadline) {
-                Ok(io) => match io {
-                    Ok(byte) => {
-                        buf.push(byte);
-                        if byte == delimiter {
-                            break;
-                        }
-                    }
-                    Err(err) => {
-                        if buf.len() > start_len {
-                            self.last_err = Err(err);
-                            break;
-                        }
-                        return Err(err);
-                    }
-                },
-                Err(err) => {
-                    if buf.len() > start_len {
+        for io in stream {
+            match io {
+                Ok(Some(byte)) => {
+                    buf.push(byte);
+                    if byte == delimiter {
                         break;
                     }
-                    return Err(io::Error::new(io::ErrorKind::TimedOut, err));
+                }
+                Ok(None) => break,
+                Err(err) => {
+                    if buf.len() > start_len {
+                        self.last_err = Err(err);
+                        break;
+                    }
+                    return Err(err);
                 }
             }
         }

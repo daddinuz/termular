@@ -1,4 +1,5 @@
 use std::{io, time::Duration};
+use term::nio::ReadNonblock;
 use term::printer::{Color, FontWeight, Style};
 use term::screen::Buffer;
 use term::{Mode, Term};
