@@ -15,19 +15,25 @@ fn main() -> io::Result<()> {
         .clear()
         .cursor()
         .hide()
-        .set_position(center - [5, 1])
+        .set_position(center - [5, 4])
         .printer()
         .using(Style::from(FontWeight::Bold).with_foreground(Color::Green))
         .print("Hello world")
         .cursor()
-        .set_position(center - [5, 0])
+        .set_position(center - [2, 2])
+        .printer()
+        .print("press")
+        .cursor()
+        .set_position(center - [5, 1])
         .printer()
         .print("- <SPACE> -")
+        .cursor()
+        .set_position(center - [3, 0])
+        .printer()
+        .print("to exit")
         .flush()?;
 
-    let _ = term
-        .stdin_mut()
-        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(5));
-
-    Ok(())
+    term.stdin_mut()
+        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(30))
+        .map(|_| ())
 }
