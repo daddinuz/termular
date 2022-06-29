@@ -18,6 +18,7 @@ use crate::vector::Vector2;
 use std::io::{self, StderrLock, StdoutLock, Write};
 
 // From: (https://en.wikipedia.org/wiki/Terminal_mode)
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Mode {
     Original,
     Raw,
