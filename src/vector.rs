@@ -14,15 +14,22 @@ impl<T: Default + Copy, const N: usize> Default for Vector<T, N> {
     }
 }
 
+impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
+    fn from(value: [T; N]) -> Self {
+        Self(value)
+    }
+}
+
 impl<T: Default + Copy, const N: usize> Vector<T, N> {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
-    fn from(value: [T; N]) -> Self {
-        Self(value)
+impl<T, const N: usize> Vector<T, N> {
+    #[must_use]
+    pub fn into_inner(self) -> [T; N] {
+        self.0
     }
 }
 
@@ -129,12 +136,5 @@ impl<T: Copy + Rem<Output = T>, const N: usize> Rem<T> for Vector<T, N> {
 impl<T: Copy + RemAssign, const N: usize> RemAssign<T> for Vector<T, N> {
     fn rem_assign(&mut self, rhs: T) {
         self.iter_mut().for_each(|lhs| *lhs %= rhs);
-    }
-}
-
-impl<T, const N: usize> Vector<T, N> {
-    #[must_use]
-    pub fn into_inner(self) -> [T; N] {
-        self.0
     }
 }
