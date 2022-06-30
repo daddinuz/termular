@@ -1,7 +1,7 @@
 use std::{io, time::Duration};
-use term::nio::ReadNonblock;
-use term::screen::Buffer;
-use term::{Mode, Term};
+use termular::nio::ReadNonblock;
+use termular::screen::Buffer;
+use termular::{Mode, Term};
 
 fn main() -> io::Result<()> {
     let (stdout, stderr) = (io::stdout(), io::stderr());

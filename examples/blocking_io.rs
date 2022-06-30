@@ -1,6 +1,6 @@
 use std::io::{self, BufRead};
-use term::screen::Buffer;
-use term::Term;
+use termular::screen::Buffer;
+use termular::Term;
 
 fn main() -> io::Result<()> {
     let (stdout, stderr) = (io::stdout(), io::stderr());
