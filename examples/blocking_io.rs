@@ -4,7 +4,8 @@ use term::Term;
 
 fn main() -> io::Result<()> {
     let (stdout, stderr) = (io::stdout(), io::stderr());
-    let mut term = Term::init(stdout.lock(), stderr.lock())?;
+
+    let mut term = Term::open(stdout.lock(), stderr.lock())?;
     let mut line = String::new();
 
     term.screen()

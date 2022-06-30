@@ -32,7 +32,7 @@ pub struct Term<'a> {
 }
 
 impl<'a> Term<'a> {
-    pub fn init(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Self> {
+    pub fn open(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Self> {
         let state = State::capture()?;
         let stdin = nio::stdin();
         stdout.flush()?;
@@ -60,32 +60,26 @@ impl<'a> Term<'a> {
         Screen(Ok(self))
     }
 
-    #[must_use]
     pub fn stdin(&self) -> &Stdin {
         &self.stdin
     }
 
-    #[must_use]
     pub fn stdin_mut(&mut self) -> &mut Stdin {
         &mut self.stdin
     }
 
-    #[must_use]
     pub fn stdout(&self) -> &StdoutLock<'a> {
         &self.stdout
     }
 
-    #[must_use]
     pub fn stdout_mut(&mut self) -> &mut StdoutLock<'a> {
         &mut self.stdout
     }
 
-    #[must_use]
     pub fn stderr(&self) -> &StderrLock<'a> {
         &self.stderr
     }
 
-    #[must_use]
     pub fn stderr_mut(&mut self) -> &mut StderrLock<'a> {
         &mut self.stderr
     }
