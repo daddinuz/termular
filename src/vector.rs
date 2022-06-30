@@ -1,12 +1,12 @@
 use std::ops::{
-    Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
+    Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub,
+    SubAssign,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Vector<T, const N: usize>([T; N]);
 
 pub type Vector2<T> = Vector<T, 2>;
-pub type Vector3<T> = Vector<T, 3>;
 
 impl<T: Default + Copy, const N: usize> Default for Vector<T, N> {
     fn default() -> Self {
@@ -117,96 +117,24 @@ impl<T: Copy + DivAssign, const N: usize> DivAssign<T> for Vector<T, N> {
     }
 }
 
+impl<T: Copy + Rem<Output = T>, const N: usize> Rem<T> for Vector<T, N> {
+    type Output = Self;
+
+    fn rem(mut self, rhs: T) -> Self::Output {
+        self.iter_mut().for_each(|lhs| *lhs = *lhs % rhs);
+        self
+    }
+}
+
+impl<T: Copy + RemAssign, const N: usize> RemAssign<T> for Vector<T, N> {
+    fn rem_assign(&mut self, rhs: T) {
+        self.iter_mut().for_each(|lhs| *lhs %= rhs);
+    }
+}
+
 impl<T, const N: usize> Vector<T, N> {
     #[must_use]
     pub fn into_inner(self) -> [T; N] {
         self.0
-    }
-}
-
-impl<T: Copy> Vector2<T> {
-    #[must_use]
-    pub fn x(&self) -> T {
-        self[0]
-    }
-
-    #[must_use]
-    pub fn y(&self) -> T {
-        self[1]
-    }
-}
-
-impl<T> Vector2<T> {
-    #[must_use]
-    pub fn x_ref(&self) -> &T {
-        &self[0]
-    }
-
-    #[must_use]
-    pub fn y_ref(&self) -> &T {
-        &self[1]
-    }
-}
-
-impl<T> Vector2<T> {
-    #[must_use]
-    pub fn x_mut(&mut self) -> &mut T {
-        &mut self[0]
-    }
-
-    #[must_use]
-    pub fn y_mut(&mut self) -> &mut T {
-        &mut self[1]
-    }
-}
-
-impl<T: Copy> Vector3<T> {
-    #[must_use]
-    pub fn x(&self) -> T {
-        self[0]
-    }
-
-    #[must_use]
-    pub fn y(&self) -> T {
-        self[1]
-    }
-
-    #[must_use]
-    pub fn z(&self) -> T {
-        self[2]
-    }
-}
-
-impl<T> Vector3<T> {
-    #[must_use]
-    pub fn x_ref(&self) -> &T {
-        &self[0]
-    }
-
-    #[must_use]
-    pub fn y_ref(&self) -> &T {
-        &self[1]
-    }
-
-    #[must_use]
-    pub fn z_ref(&self) -> &T {
-        &self[2]
-    }
-}
-
-impl<T> Vector3<T> {
-    #[must_use]
-    pub fn x_mut(&mut self) -> &mut T {
-        &mut self[0]
-    }
-
-    #[must_use]
-    pub fn y_mut(&mut self) -> &mut T {
-        &mut self[1]
-    }
-
-    #[must_use]
-    pub fn z_mut(&mut self) -> &mut T {
-        &mut self[2]
     }
 }
