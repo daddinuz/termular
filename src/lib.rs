@@ -20,7 +20,7 @@ use std::io::{self, StderrLock, StdoutLock, Write};
 // From: (https://en.wikipedia.org/wiki/Terminal_mode)
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Mode {
-    Original,
+    Cooked,
     Raw,
 }
 
@@ -86,7 +86,7 @@ impl<'a> Term<'a> {
 
     pub fn set_mode(&mut self, mode: Mode) -> io::Result<()> {
         match mode {
-            Mode::Original => self.state.apply(),
+            Mode::Cooked => self.state.apply(),
             Mode::Raw => self.state.raw().apply(),
         }
     }
@@ -111,7 +111,7 @@ impl<'a> Drop for Term<'a> {
                 .set_buffer(Buffer::Primary)
                 .flush(),
         );
-        best_effort(self.set_mode(Mode::Original));
+        best_effort(self.set_mode(Mode::Cooked));
     }
 }
 
