@@ -14,32 +14,6 @@ use std::sync::Once;
 use libc::{ioctl, winsize, TIOCGWINSZ};
 use termios::{cfmakeraw, tcsetattr, Termios, TCSANOW};
 
-static mut DEFAULT_STATE: MaybeUninit<State> = MaybeUninit::uninit();
-static INIT: Once = Once::new();
-
-fn default_state() -> io::Result<State> {
-    if !INIT.is_completed() {
-        // If we are here does not mean `INIT` has not been executed,
-        // `is_completed` may have returned a stale value.
-        // If that's the case, someone else may have initialized `DEFAULT_STATE`
-        // to the proper value and we must preserve it, therefore if `term::state()`
-        // returns an Ok, it will be discarded because the call to `call_once_force`
-        // won't run (since someone else alredy initialized `DEFAULT_STATE`).
-        // If otherwise `term::state()` returns an Err, the latter will be returned,
-        // even if `DEFAULT_STATE` has been properly initialized by someone else.
-        // This is not good actually, anyway subsequent calls to this function
-        // will return the right value, by now this function is best-effort.
-        // If instead no one else initialized `DEFAULT_STATE` and `term::state()`
-        // returned successfully we are the one that are going to initialize `DEFAULT_STATE`.
-        let state = term::state()?;
-        INIT.call_once_force(|_| {
-            unsafe { DEFAULT_STATE.write(state) };
-        })
-    }
-
-    Ok(unsafe { DEFAULT_STATE.assume_init() })
-}
-
 pub struct Term<'a> {
     stdin: Stdin,
     stdout: StdoutLock<'a>,
@@ -47,8 +21,18 @@ pub struct Term<'a> {
 }
 
 impl<'a> Term<'a> {
-    pub fn open(stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Self> {
-        term::setup(stdout, stderr)
+    pub fn open(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Self> {
+        // trigger DEFAULT_STATE initialization!!!
+        default_state()?;
+
+        // flush pending outputs
+        stdout.flush()?;
+
+        Ok(Self {
+            stdin: nio::stdin(),
+            stdout,
+            stderr,
+        })
     }
 
     #[must_use]
@@ -162,30 +146,15 @@ where
 // This function is not exported directly but as a `Term` method so
 // that we ensure to restore `Mode::Default` when `Term` gets droppped.
 fn set_mode(mode: Mode) -> io::Result<()> {
-    // If we are here `DEFAULT_STATE` must have been initialized.
-    debug_assert!(INIT.is_completed());
-
-    let state = default_state().unwrap();
+    let state = default_state()?;
     match mode {
         Mode::Default => term::apply(&state),
         Mode::Raw => term::apply(&state.make_raw()),
     }
 }
 
-fn setup<'a>(mut stdout: StdoutLock<'a>, stderr: StderrLock<'a>) -> io::Result<Term<'a>> {
-    // trigger DEFAULT_STATE initialization!!!
-    default_state()?;
-    debug_assert!(INIT.is_completed());
-
-    // flush pending outputs
-    stdout.flush()?;
-
-    Ok(Term {
-        stdin: nio::stdin(),
-        stdout,
-        stderr,
-    })
-}
+static mut DEFAULT_STATE: MaybeUninit<State> = MaybeUninit::uninit();
+static INIT: Once = Once::new();
 
 #[derive(Copy, Clone)]
 struct State(Termios);
@@ -197,6 +166,29 @@ impl State {
         cfmakeraw(&mut inner);
         Self(inner)
     }
+}
+
+fn default_state() -> io::Result<State> {
+    if !INIT.is_completed() {
+        // If we are here does not mean `INIT` has not been executed,
+        // `is_completed` may have returned a stale value.
+        // If that's the case, someone else may have initialized `DEFAULT_STATE`
+        // to the proper value and we must preserve it, therefore if `term::state()`
+        // returns an Ok, it will be discarded because the call to `call_once_force`
+        // won't run (since someone else alredy initialized `DEFAULT_STATE`).
+        // If otherwise `term::state()` returns an Err, the latter will be returned,
+        // even if `DEFAULT_STATE` has been properly initialized by someone else.
+        // This is not good actually, anyway subsequent calls to this function
+        // will return the right value, by now this function is best-effort.
+        // If instead no one else initialized `DEFAULT_STATE` and `term::state()`
+        // returned successfully we are the one that are going to initialize `DEFAULT_STATE`.
+        let state = term::state()?;
+        INIT.call_once_force(|_| {
+            unsafe { DEFAULT_STATE.write(state) };
+        })
+    }
+
+    Ok(unsafe { DEFAULT_STATE.assume_init() })
 }
 
 fn state() -> io::Result<State> {
