@@ -1,7 +1,6 @@
 # Termular
 
-Termular is a toolkit for the development of [terminal user interfaces](https://en.wikipedia.org/w/index.php?title=Text-based_user_interface&oldid=1067654771) that aims to increase the readability and expressiveness of the code.  
-Both goals are achieved by exposing a lazy [fluent interface](https://en.wikipedia.org/w/index.php?title=Fluent_interface&oldid=1092445824), the latter brings another benefit: greater control over buffers flushing.
+Termular is a toolkit for the development of [terminal user interfaces](https://en.wikipedia.org/w/index.php?title=Text-based_user_interface&oldid=1067654771) that aims to increase the readability and expressiveness of the code. Both goals are achieved by exposing a lazy [fluent interface](https://en.wikipedia.org/w/index.php?title=Fluent_interface&oldid=1092445824), the latter brings another benefit: greater control over buffers flushing.
 
 ### Examples
 
