@@ -8,7 +8,7 @@ fn main() -> io::Result<()> {
 
     let mut term = Term::open(stdout.lock(), stderr.lock())?;
     let center = term.size()? / 2;
-    let start = center - [16, 8];
+    let start = center - [16, 2];
 
     term.set_mode(Mode::Raw)?;
     let mut stream = term
