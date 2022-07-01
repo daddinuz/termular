@@ -16,9 +16,11 @@ fn main() -> io::Result<()> {
     loop {
         term.printer().print("> ").flush()?;
 
-        term.stdin_mut().read_line(&mut line)?;
-        println!("# {}", line);
+        if 0 == term.stdin_mut().read_line(&mut line)? {
+            return Ok(());
+        }
 
+        println!("# {}", line);
         line.clear();
     }
 }
