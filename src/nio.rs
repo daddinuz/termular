@@ -3,17 +3,6 @@ use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 use std::{iter, mem, thread};
 
-pub trait ReadNonblock {
-    fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize>;
-
-    fn read_timeout_until(
-        &mut self,
-        delimiter: u8,
-        buf: &mut Vec<u8>,
-        timeout: Duration,
-    ) -> io::Result<usize>;
-}
-
 pub struct Stdin {
     inner: BufReader<StdinRaw>,
 }
@@ -72,6 +61,17 @@ impl BufRead for Stdin {
     fn read_line(&mut self, buf: &mut String) -> io::Result<usize> {
         self.inner.read_line(buf)
     }
+}
+
+pub trait ReadNonblock {
+    fn read_timeout(&mut self, buf: &mut [u8], timeout: Duration) -> io::Result<usize>;
+
+    fn read_timeout_until(
+        &mut self,
+        delimiter: u8,
+        buf: &mut Vec<u8>,
+        timeout: Duration,
+    ) -> io::Result<usize>;
 }
 
 impl ReadNonblock for Stdin {
