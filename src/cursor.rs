@@ -2,7 +2,8 @@ use crate::nio::ReadNonblock;
 use crate::printer::Printer;
 use crate::screen::Screen;
 use crate::vector::Vector2;
-use crate::{state, Term};
+use crate::{term, Mode, Term};
+
 use std::io::{self, Write};
 use std::time::Duration;
 use std::{error, str};
@@ -81,7 +82,7 @@ impl<'a, 'b> Cursor<'a, 'b> {
         let term = self.0?;
 
         term.stdout_mut().flush()?;
-        state::raw_scope(|| {
+        term::with_mode(Mode::Raw, || {
             let mut buf = Vec::new();
 
             term.stderr_mut().write_all(b"\x1B[6n")?;
