@@ -2,6 +2,7 @@ use crate::cursor::Cursor;
 use crate::nio::{self, Stdin};
 use crate::printer::Printer;
 use crate::screen::{Buffer, Screen};
+use crate::stream::Stream;
 use crate::term;
 use crate::vector::Vector2;
 
@@ -63,6 +64,11 @@ impl<'a> Term<'a> {
     #[must_use]
     pub fn screen(&mut self) -> Screen<'a, '_> {
         Screen(Ok(self))
+    }
+
+    #[must_use]
+    pub fn stream(&mut self) -> Stream<'a, '_> {
+        Stream(Ok(self))
     }
 
     pub fn stdin(&self) -> &Stdin {

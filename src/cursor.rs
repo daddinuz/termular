@@ -1,6 +1,7 @@
 use crate::nio::ReadNonblock;
 use crate::printer::Printer;
 use crate::screen::Screen;
+use crate::stream::Stream;
 use crate::vector::Vector2;
 use crate::{term, Mode, Term};
 
@@ -19,6 +20,11 @@ impl<'a, 'b> Cursor<'a, 'b> {
     #[must_use]
     pub fn screen(self) -> Screen<'a, 'b> {
         Screen(self.0)
+    }
+
+    #[must_use]
+    pub fn stream(self) -> Stream<'a, 'b> {
+        Stream(self.0)
     }
 
     #[must_use]

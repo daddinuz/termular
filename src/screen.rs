@@ -1,6 +1,8 @@
 use crate::cursor::Cursor;
 use crate::printer::Printer;
+use crate::stream::Stream;
 use crate::Term;
+
 use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -26,6 +28,11 @@ impl<'a, 'b> Screen<'a, 'b> {
     #[must_use]
     pub fn printer(self) -> Printer<'a, 'b> {
         Printer(self.0)
+    }
+
+    #[must_use]
+    pub fn stream(self) -> Stream<'a, 'b> {
+        Stream(self.0)
     }
 
     #[must_use]
