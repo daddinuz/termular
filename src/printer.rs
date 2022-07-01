@@ -6,34 +6,25 @@ use crate::Term;
 use std::fmt::{Debug, Display};
 use std::io::{self, Write};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TextDecoration {
+    #[default]
     None,
     Strike,
     Underline,
 }
 
-impl Default for TextDecoration {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FontWeight {
+    #[default]
     Normal,
     Light,
     Bold,
 }
 
-impl Default for FontWeight {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Color {
+    #[default]
     Default,
     Black,
     Red,
@@ -43,12 +34,6 @@ pub enum Color {
     Magenta,
     Cyan,
     White,
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Self::Default
-    }
 }
 
 #[derive(Default, Copy, Clone, PartialEq, Eq)]

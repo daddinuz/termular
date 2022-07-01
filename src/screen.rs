@@ -5,8 +5,9 @@ use crate::Term;
 
 use std::io::{self, Write};
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Buffer {
+    #[default]
     Primary,
     Alternate,
 }
