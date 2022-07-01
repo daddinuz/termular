@@ -8,7 +8,7 @@ pub struct Vector<T, const N: usize>([T; N]);
 
 pub type Vector2<T> = Vector<T, 2>;
 
-impl<T: Default + Copy, const N: usize> Default for Vector<T, N> {
+impl<T: Copy + Default, const N: usize> Default for Vector<T, N> {
     fn default() -> Self {
         Self([Default::default(); N])
     }
@@ -20,7 +20,7 @@ impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
     }
 }
 
-impl<T: Default + Copy, const N: usize> Vector<T, N> {
+impl<T: Copy + Default, const N: usize> Vector<T, N> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -56,85 +56,122 @@ impl<T: Copy + Neg<Output = T>, const N: usize> Neg for Vector<T, N> {
     }
 }
 
-impl<T: Copy + Add<Output = T>, Rhs: Into<Vector<T, N>>, const N: usize> Add<Rhs> for Vector<T, N> {
-    type Output = Self;
+macro_rules! impl_binop {
+    ($Op:ident :: $call:ident) => {
+        impl<T: Copy + $Op<Output = T>, const N: usize> $Op<Vector<T, N>> for Vector<T, N> {
+            type Output = Self;
 
-    fn add(mut self, rhs: Rhs) -> Self::Output {
-        self.iter_mut().zip(rhs.into().iter()).for_each(|(l, r)| {
-            *l = *l + *r;
-        });
-        self
-    }
+            fn $call(mut self, rhs: Vector<T, N>) -> Self::Output {
+                self.iter_mut().zip(rhs.into_iter()).for_each(|(l, r)| {
+                    *l = $Op::$call(*l, r);
+                });
+                self
+            }
+        }
+
+        impl<T: Copy + $Op<Output = T>, const N: usize> $Op<[T; N]> for Vector<T, N> {
+            type Output = Self;
+
+            fn $call(mut self, rhs: [T; N]) -> Self::Output {
+                self.iter_mut().zip(rhs.into_iter()).for_each(|(l, r)| {
+                    *l = $Op::$call(*l, r);
+                });
+                self
+            }
+        }
+
+        impl<T: Copy + $Op<Output = T>, const N: usize> $Op<T> for Vector<T, N> {
+            type Output = Self;
+
+            fn $call(mut self, rhs: T) -> Self::Output {
+                self.iter_mut().for_each(|lhs| *lhs = $Op::$call(*lhs, rhs));
+                self
+            }
+        }
+    };
 }
 
-impl<T: Copy + AddAssign, Rhs: Into<Vector<T, N>>, const N: usize> AddAssign<Rhs> for Vector<T, N> {
-    fn add_assign(&mut self, rhs: Rhs) {
-        self.iter_mut()
-            .zip(rhs.into().iter())
-            .for_each(|(l, r)| *l += *r);
-    }
+macro_rules! impl_binop_assign {
+    ($Op:ident :: $call:ident) => {
+        impl<T: Copy + $Op, const N: usize> $Op<Vector<T, N>> for Vector<T, N> {
+            fn $call(&mut self, rhs: Vector<T, N>) {
+                self.iter_mut()
+                    .zip(rhs.into_iter())
+                    .for_each(|(l, r)| $Op::$call(l, r));
+            }
+        }
+
+        impl<T: Copy + $Op, const N: usize> $Op<[T; N]> for Vector<T, N> {
+            fn $call(&mut self, rhs: [T; N]) {
+                self.iter_mut()
+                    .zip(rhs.into_iter())
+                    .for_each(|(l, r)| $Op::$call(l, r));
+            }
+        }
+
+        impl<T: Copy + $Op, const N: usize> $Op<T> for Vector<T, N> {
+            fn $call(&mut self, rhs: T) {
+                self.iter_mut().for_each(|lhs| $Op::$call(lhs, rhs));
+            }
+        }
+    };
 }
 
-impl<T: Copy + Sub<Output = T>, Rhs: Into<Vector<T, N>>, const N: usize> Sub<Rhs> for Vector<T, N> {
-    type Output = Self;
+impl_binop!(Add::add);
+impl_binop!(Sub::sub);
+impl_binop!(Mul::mul);
+impl_binop!(Div::div);
+impl_binop!(Rem::rem);
 
-    fn sub(mut self, rhs: Rhs) -> Self::Output {
-        self.iter_mut().zip(rhs.into().iter()).for_each(|(l, r)| {
-            *l = *l - *r;
-        });
-        self
+impl_binop_assign!(AddAssign::add_assign);
+impl_binop_assign!(SubAssign::sub_assign);
+impl_binop_assign!(MulAssign::mul_assign);
+impl_binop_assign!(DivAssign::div_assign);
+impl_binop_assign!(RemAssign::rem_assign);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[allow(non_snake_case)]
+    fn V2<T>(x: T, y: T) -> Vector2<T> {
+        Vector2::from([x, y])
     }
-}
 
-impl<T: Copy + SubAssign, Rhs: Into<Vector<T, N>>, const N: usize> SubAssign<Rhs> for Vector<T, N> {
-    fn sub_assign(&mut self, rhs: Rhs) {
-        self.iter_mut()
-            .zip(rhs.into().iter())
-            .for_each(|(l, r)| *l -= *r);
-    }
-}
+    #[test]
+    fn binops() {
+        let sut = Vector2::default();
 
-impl<T: Copy + Mul<Output = T>, const N: usize> Mul<T> for Vector<T, N> {
-    type Output = Self;
+        assert_eq!(sut + V2(1, 1), [1, 1].into());
+        assert_eq!(sut + [1, 1], [1, 1].into());
+        assert_eq!(sut + 1, [1, 1].into());
 
-    fn mul(mut self, rhs: T) -> Self::Output {
-        self.iter_mut().for_each(|lhs| *lhs = *lhs * rhs);
-        self
-    }
-}
+        assert_eq!(sut - V2(1, 1), [-1, -1].into());
+        assert_eq!(sut - [1, 1], [-1, -1].into());
+        assert_eq!(sut - 1, [-1, -1].into());
 
-impl<T: Copy + MulAssign, const N: usize> MulAssign<T> for Vector<T, N> {
-    fn mul_assign(&mut self, rhs: T) {
-        self.iter_mut().for_each(|lhs| *lhs *= rhs);
-    }
-}
+        assert_eq!(sut * V2(1, 1), [0, 0].into());
+        assert_eq!(sut * [1, 1], [0, 0].into());
+        assert_eq!(sut * 1, [0, 0].into());
 
-impl<T: Copy + Div<Output = T>, const N: usize> Div<T> for Vector<T, N> {
-    type Output = Self;
+        assert_eq!((sut + 4) * V2(-1, -1), [-4, -4].into());
+        assert_eq!((sut + 4) * [-1, -1], [-4, -4].into());
+        assert_eq!((sut + 4) * -1, [-4, -4].into());
 
-    fn div(mut self, rhs: T) -> Self::Output {
-        self.iter_mut().for_each(|lhs| *lhs = *lhs / rhs);
-        self
-    }
-}
+        assert_eq!(sut / V2(1, 1), [0, 0].into());
+        assert_eq!(sut / [1, 1], [0, 0].into());
+        assert_eq!(sut / 1, [0, 0].into());
 
-impl<T: Copy + DivAssign, const N: usize> DivAssign<T> for Vector<T, N> {
-    fn div_assign(&mut self, rhs: T) {
-        self.iter_mut().for_each(|lhs| *lhs /= rhs);
-    }
-}
+        assert_eq!((sut + 4) / V2(-2, -2), [-2, -2].into());
+        assert_eq!((sut + 4) / [-2, -2], [-2, -2].into());
+        assert_eq!((sut + 4) / -2, [-2, -2].into());
 
-impl<T: Copy + Rem<Output = T>, const N: usize> Rem<T> for Vector<T, N> {
-    type Output = Self;
+        assert_eq!(sut % V2(2, 2), [0, 0].into());
+        assert_eq!(sut % [2, 2], [0, 0].into());
+        assert_eq!(sut % 2, [0, 0].into());
 
-    fn rem(mut self, rhs: T) -> Self::Output {
-        self.iter_mut().for_each(|lhs| *lhs = *lhs % rhs);
-        self
-    }
-}
-
-impl<T: Copy + RemAssign, const N: usize> RemAssign<T> for Vector<T, N> {
-    fn rem_assign(&mut self, rhs: T) {
-        self.iter_mut().for_each(|lhs| *lhs %= rhs);
+        assert_eq!((sut + 3) % V2(2, 2), [1, 1].into());
+        assert_eq!((sut + 3) % [2, 2], [1, 1].into());
+        assert_eq!((sut + 3) % 2, [1, 1].into());
     }
 }
