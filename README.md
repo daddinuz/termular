@@ -58,16 +58,21 @@ Here is a list, in no particular order, of those from which I drew inspiration:
 - [Cursive](https://github.com/gyscos/cursive)
 - [Termion](https://github.com/redox-os/termion)
 
-### About stability
+### Building
+
+Termular relies on the `deadline_api` feature that has not been stabilized yet,
+so **nightly channel** is required in order to build the crate.
+
+### Portability
+
+Currently, only UNIX systems are supported, and very few terminals have been tested.
+
+### Stability
 
 Termular is in a early development stage so expect it to **break compatibility at any time**.  
 Consider this project **unstable** and **not backward compatible**.
 
-### About portability
-
-Currently, only UNIX systems are supported, and very few terminals have been tested.
-
-### About safety
+### Safety
 
 Internally, some unsafe blocks are used, mainly to interface with the C language.
 
