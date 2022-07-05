@@ -6,7 +6,7 @@ Termular is a toolkit for the development of [terminal user interfaces](https://
 
 ```Rust
 use termular::nio::ReadNonblock;
-use termular::printer::{Color, FontWeight, Style};
+use termular::printer::{Color, FontWeight, Styled};
 use termular::screen::Buffer;
 use termular::{Mode, Term};
 
@@ -26,8 +26,11 @@ fn main() -> io::Result<()> {
         .hide()
         .set_position(center - [5, 4])
         .printer()
-        .using(Style::from(FontWeight::Bold).with_foreground(Color::Green))
-        .print("Hello world") // automatically restores default style after printing
+        .print(
+            "Hello world"
+                .with_foreground(Color::Green)
+                .with_weight(FontWeight::Bold),
+        )
         .cursor()
         .set_position(center - [2, 2])
         .printer()
@@ -40,7 +43,7 @@ fn main() -> io::Result<()> {
         .set_position(center - [3, 0])
         .printer()
         .print("to exit")
-        .flush()?; // perform all the actions
+        .flush()?;
 
     term.stdin_mut()
         .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(30))
@@ -54,6 +57,7 @@ Check out more examples in this [folder](https://github.com/daddinuz/termular/tr
 
 There are a lot of amazing crates around that try to perform the same task (or a very similar one) as Termular.  
 Here is a list, in no particular order, of those from which I drew inspiration:
+- [Colored](https://github.com/mackwic/colored)
 - [CrossTerm](https://github.com/crossterm-rs/crossterm)
 - [Cursive](https://github.com/gyscos/cursive)
 - [Termion](https://github.com/redox-os/termion)

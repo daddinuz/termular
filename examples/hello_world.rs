@@ -1,6 +1,6 @@
 use std::{io, time::Duration};
 use termular::nio::ReadNonblock;
-use termular::printer::{Color, FontWeight, Style};
+use termular::printer::{Color, FontWeight, Styled};
 use termular::screen::Buffer;
 use termular::{Mode, Term};
 
@@ -18,8 +18,11 @@ fn main() -> io::Result<()> {
         .hide()
         .set_position(center - [5, 4])
         .printer()
-        .using(Style::from(FontWeight::Bold).with_foreground(Color::Green))
-        .print("Hello world")
+        .print(
+            "Hello world"
+                .with_foreground(Color::Green)
+                .with_weight(FontWeight::Bold),
+        )
         .cursor()
         .set_position(center - [2, 2])
         .printer()
