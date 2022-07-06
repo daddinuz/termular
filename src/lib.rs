@@ -1,17 +1,17 @@
 #![feature(deadline_api)]
 
 pub mod cursor;
+pub mod flow;
 pub mod nio;
 pub mod printer;
 pub mod screen;
-pub mod stream;
 pub mod vector;
 
 use crate::cursor::Cursor;
+use crate::flow::Flow;
 use crate::nio::Stdin;
 use crate::printer::Printer;
 use crate::screen::{Buffer, Screen};
-use crate::stream::Stream;
 use crate::vector::Vector2;
 
 use std::io::{self, StderrLock, StdoutLock, Write};
@@ -59,8 +59,8 @@ impl<'a> Term<'a> {
     }
 
     #[must_use]
-    pub fn stream(&mut self) -> Stream<'a, '_> {
-        Stream(Ok(self))
+    pub fn flow(&mut self) -> Flow<'a, '_> {
+        Flow(Ok(self))
     }
 
     pub fn stdin(&self) -> &Stdin {

@@ -5,9 +5,9 @@ use crate::{Mode, Term, UpdatePolicy};
 
 use std::io::{self, Write};
 
-pub struct Stream<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
+pub struct Flow<'a: 'b, 'b>(pub(crate) io::Result<&'b mut Term<'a>>);
 
-impl<'a, 'b> Stream<'a, 'b> {
+impl<'a, 'b> Flow<'a, 'b> {
     #[must_use]
     pub fn cursor(self) -> Cursor<'a, 'b> {
         Cursor(self.0)

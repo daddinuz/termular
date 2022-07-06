@@ -11,31 +11,31 @@ fn main() -> io::Result<()> {
     let start = center - [16, 2];
 
     term.set_mode(Mode::Raw)?;
-    let mut stream = term
+    let mut flow = term
         .screen()
         .set_buffer(Buffer::Alternate)
         .clear()
         .cursor()
         .hide()
         .set_position(start)
-        .stream();
+        .flow();
 
     let seeds = [0x1F0A1, 0x1F0B1, 0x1F0C1, 0x1F0D1];
     for y in 0..4 {
         for x in 0..15 {
-            stream = stream
+            flow = flow
                 .printer()
                 .print(format!(
                     "{} ",
                     char::from_u32(seeds[y as usize] + x as u32).unwrap()
                 ))
-                .stream();
+                .flow();
         }
 
-        stream = stream.cursor().set_position(start + [0, y + 1]).stream();
+        flow = flow.cursor().set_position(start + [0, y + 1]).flow();
     }
 
-    stream.flush()?;
+    flow.flush()?;
     term.stdin_mut()
         .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(8))
         .map(|_| ())

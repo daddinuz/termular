@@ -10,7 +10,7 @@ fn main() -> io::Result<()> {
     let mut term = Term::open(stdout.lock(), stderr.lock())?;
     let center = term.size()? / 2;
 
-    term.stream()
+    term.flow()
         .set_mode(Mode::Raw)
         .screen()
         .set_buffer(Buffer::Alternate)

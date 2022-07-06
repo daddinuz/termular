@@ -1,6 +1,6 @@
 use crate::cursor::Cursor;
+use crate::flow::Flow;
 use crate::printer::Printer;
-use crate::stream::Stream;
 use crate::Term;
 
 use std::io::{self, Write};
@@ -32,8 +32,8 @@ impl<'a, 'b> Screen<'a, 'b> {
     }
 
     #[must_use]
-    pub fn stream(self) -> Stream<'a, 'b> {
-        Stream(self.0)
+    pub fn flow(self) -> Flow<'a, 'b> {
+        Flow(self.0)
     }
 
     #[must_use]
