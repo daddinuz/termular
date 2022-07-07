@@ -1,3 +1,5 @@
+use std::fmt::{self, Display, Formatter};
+use std::mem;
 use std::ops::{
     Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub,
     SubAssign,
@@ -30,6 +32,23 @@ impl<T, const N: usize> Vector<T, N> {
     #[must_use]
     pub fn into_inner(self) -> [T; N] {
         self.0
+    }
+}
+
+impl<T: Display, const N: usize> Display for Vector<T, N> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "[")?;
+
+        let mut flag = false;
+        self.0.iter().try_for_each(|i| {
+            if mem::replace(&mut flag, true) {
+                write!(f, ", {}", i)
+            } else {
+                write!(f, "{}", i)
+            }
+        })?;
+
+        write!(f, "]")
     }
 }
 
