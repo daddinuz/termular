@@ -10,8 +10,9 @@ fn main() -> io::Result<()> {
     let center = term.size()? / 2;
     let start = center - [16, 2];
 
-    term.set_mode(Mode::Raw)?;
     let mut flow = term
+        .flow()
+        .set_mode(Mode::Raw)
         .screen()
         .set_buffer(Buffer::Alternate)
         .clear()
@@ -25,18 +26,28 @@ fn main() -> io::Result<()> {
         for x in 0..15 {
             flow = flow
                 .printer()
-                .print(format!(
-                    "{} ",
-                    char::from_u32(seeds[y as usize] + x as u32).unwrap()
-                ))
+                .print(char::from_u32(seeds[y as usize] + x as u32).unwrap())
+                .print(" ")
                 .flow();
         }
 
         flow = flow.cursor().set_position(start + [0, y + 1]).flow();
     }
 
-    flow.flush()?;
+    flow.cursor()
+        .down(1)
+        .right(12)
+        .save()
+        .printer()
+        .print("<SPACE>")
+        .cursor()
+        .restore()
+        .down(1)
+        .printer()
+        .print("to exit")
+        .flush()?;
+
     term.stdin_mut()
-        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(8))
+        .read_timeout_until(b' ', &mut Vec::new(), Duration::from_secs(16))
         .map(|_| ())
 }
